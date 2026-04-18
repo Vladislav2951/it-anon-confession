@@ -13,6 +13,9 @@ if TYPE_CHECKING:
 
 
 class SQLAlchemyUoW(IDatabaseUoW):
+    def __init__(self):
+        self._session = async_session_maker()
+
     async def __aenter__(self) -> Self:
         self._session = async_session_maker()
         self._transaction = self._session.begin()
