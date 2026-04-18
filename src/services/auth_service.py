@@ -1,13 +1,17 @@
 from __future__ import annotations
 
+from logging import getLogger
 from typing import TYPE_CHECKING
 
-from uuid_extensions import uuid7  # type: ignore[import-untyped]
+from pydantic import SecretStr
 
-from core.security import verify_password
-from domain.dto import LoginInput
+from core.security import get_password_hash, verify_password
+from domain.dto import LoginInput, RegisterInput
 from domain.entities import User
-from domain.errors import BadLogin
+from domain.errors import BadLogin, ConflictError
+
+
+logger = getLogger(__name__)
 
 
 if TYPE_CHECKING:
@@ -30,3 +34,16 @@ class AuthService:
             raise BadLogin("Incorrect password")
 
         return user
+
+    async def register(self, register: RegisterInput):
+        async with self._db_uow_factory() as t:
+            if user := await t.user_repo.get_one_by_email(register.email):
+                raise ConflictError(f"User {user.email} is already registered")
+
+            register.password = SecretStr(
+                get_password_hash(register.password.get_secret_value())
+            )
+
+            user = await t.user_repo.create(register)
+
+            logger.info("User %s has been registered (email: %s)", user.id, user.email)

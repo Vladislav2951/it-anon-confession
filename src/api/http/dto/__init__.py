@@ -1,4 +1,4 @@
-from .auth_dto import LoginDTO
+from .auth_dto import LoginDTO, RegisterDTO
 
 
-__all__ = ["LoginDTO"]
+__all__ = ["LoginDTO", "RegisterDTO"]
