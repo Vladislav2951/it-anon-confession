@@ -34,8 +34,6 @@ if settings.CORS_ORIGINS:
     )
 
 # Добавляем middleware
-# app.add_middleware(PrefixMiddleware)
-# TODO return
 # app.add_middleware(AuthMiddleware) # type: ignore[attr-defined]
 
 # Переопределение обработчика HTTP ошибок

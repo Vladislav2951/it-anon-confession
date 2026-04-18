@@ -10,6 +10,7 @@ from api.http.endpoints.dto import LoginDTO
 from core.config import get_settings
 from core.dependencies import auth_srv
 from core.security import TokenInfo, create_access_token
+from domain.errors import BadLogin
 
 
 settings = get_settings()
@@ -33,7 +34,7 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 @router.post("/login")
 async def login(credentials: LoginDTO, srv: AuthService = Depends(auth_srv)):
     try:
-        user = srv.login(credentials)
+        user = await srv.login(credentials)
 
         jwt_payload = {"sub": user.id}
         access_token = create_access_token(jwt_payload)
@@ -55,7 +56,7 @@ async def login(credentials: LoginDTO, srv: AuthService = Depends(auth_srv)):
             status_code=status.HTTP_200_OK,
             headers=headers,
         )
-    except:
+    except BadLogin:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Bad login or password"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password"
         )

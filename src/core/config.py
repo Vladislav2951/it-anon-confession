@@ -3,15 +3,15 @@ from importlib.metadata import PackageNotFoundError, version
 from ipaddress import IPv4Address
 from pathlib import Path
 import tomllib
-from typing import Literal, Union
+from typing import ClassVar, Literal, Union
 
-from pydantic import IPvAnyAddress, PositiveInt
-from pydantic_settings import BaseSettings
+from pydantic import IPvAnyAddress, PositiveInt, SecretStr
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from libs.logger.custom_logger import LogLevel
 
 
-BASE_DIR = Path(__file__).parent.parent.parent
+_BASE_DIR = Path(__file__).parent.parent.parent
 
 
 def _get_version_from_pyproject():
@@ -21,7 +21,7 @@ def _get_version_from_pyproject():
         pass
 
     try:
-        pyproject_path = BASE_DIR / "pyproject.toml"
+        pyproject_path = _BASE_DIR / "pyproject.toml"
         with open(pyproject_path, "rb") as f:
             data = tomllib.load(f)
             return data.get("project", {}).get("version", "0.0.0")
@@ -30,23 +30,27 @@ def _get_version_from_pyproject():
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
     ENV: Literal["dev", "prod"] = "prod"
+    VERSION: str = _get_version_from_pyproject()
 
     HOST: Union[IPvAnyAddress, Literal["localhost"]] = IPv4Address("0.0.0.0")
     PORT: int = 8000
     LOG_LEVEL: LogLevel = LogLevel.INFO
 
-    JWT_SECRET: str
+    JWT_SECRET: SecretStr
     ACCESS_TOKEN_EXPIRE_MINUTES: PositiveInt = 15
-
-    VERSION: str = _get_version_from_pyproject()
 
     CORS_ORIGINS: list[str] = []
 
-    # BASE_URL: str
-
-    class Config:
-        env_file = ".env"
+    # postgres
+    DB_ENGINE: str = "postgresql+asyncpg"
+    DB_HOST: str = "localhost"
+    DB_PORT: int = 3306
+    DB_NAME: str = "postgres"
+    DB_USERNAME: str = "postgres"
+    DB_PASSWORD: SecretStr = SecretStr("postgres")
 
 
 @lru_cache
@@ -57,15 +61,3 @@ def get_settings():
 #         # date
 #         self.DATETIME_FORMAT: str = "%d-%m-%Y T%H:%M:%S"
 #         self.DATE_FORMAT: str = "%d-%m-%Y"
-
-#         # auth
-#         self.SESSION_DURATION_DAYS: int = int(os.getenv("SESSION_DURATION_DAYS", 7))
-
-
-#         # postgres
-#         self.DB_ENGINE: str = "postgresql+asyncpg"
-#         self.DB_HOST: str = os.getenv("DB_HOST", "localhost")
-#         self.DB_PORT: str = os.getenv("DB_PORT", "3306")
-#         self.DB_NAME: str = os.getenv("DB_NAME", "postgres")  # TODO raise error when None
-#         self.DB_USERNAME: str = os.getenv("DB_USERNAME", "postgres")
-#         self.DB_PASSWORD: str = os.getenv("DB_PASSWORD", "postgres")

@@ -15,9 +15,7 @@ if TYPE_CHECKING:
 
 class IUserRepo(ABC):
     @abstractmethod
-    async def create(self, register_inp: RegisterInput) -> User:
-        pass
+    async def create(self, register_inp: RegisterInput) -> User: ...
 
     @abstractmethod
-    async def get_one_by_email(self, email: EmailStr) -> Optional[User]:
-        pass
+    async def get_one_by_email(self, email: EmailStr) -> Optional[User]: ...
