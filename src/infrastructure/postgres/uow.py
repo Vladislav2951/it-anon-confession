@@ -19,6 +19,7 @@ class SQLAlchemyUoW(IDatabaseUoW):
     async def __aenter__(self) -> Self:
         self._session = async_session_maker()
         self._transaction = self._session.begin()
+        await self._transaction.__aenter__()
         return self
 
     async def __aexit__(self, exp_type, exp_val, exp_tb):
