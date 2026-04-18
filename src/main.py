@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from starlette.middleware.cors import CORSMiddleware
 
+from api.http.routes import routers
 from core.config import get_settings
 from libs.logger.custom_logger import setup_logging
 
@@ -45,4 +46,4 @@ def root():
     return {"message": "OK"}
 
 
-# app.include_router(v1_routers, prefix=configs.API_V1)
+app.include_router(routers)

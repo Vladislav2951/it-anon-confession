@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Annotated, Literal
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 
-from api.http.endpoints.dto import LoginDTO
+from api.http.dto import LoginDTO
 from core.config import get_settings
 from core.dependencies import auth_srv
 from core.security import TokenInfo, create_access_token
