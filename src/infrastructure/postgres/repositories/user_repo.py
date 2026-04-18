@@ -44,6 +44,7 @@ class UserRepo(BaseRepo, IUserRepo):
             user_table.c.first_name,
             user_table.c.last_name,
             user_table.c.father_name,
+            user_table.c.deleted_at,
         ).where(user_table.c.email == email)
 
         logger.debug("Execute: %s", stmt)

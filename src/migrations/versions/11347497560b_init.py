@@ -29,6 +29,7 @@ def upgrade() -> None:
         first_name VARCHAR NOT NULL,
         last_name VARCHAR NOT NULL,
         father_name VARCHAR
+        deleted_at TIMESTAMPZ
     );
     """
     )

@@ -1,4 +1,4 @@
-from sqlalchemy import UUID, Column, MetaData, String, Table
+from sqlalchemy import TIMESTAMP, UUID, Column, MetaData, String, Table
 
 
 metadata = MetaData()
@@ -12,4 +12,5 @@ user_table = Table(
     Column("first_name", String, nullable=False),
     Column("last_name", String, nullable=False),
     Column("father_name", String, nullable=True),
+    Column("deleted_at", TIMESTAMP(timezone=True), nullable=True),
 )
