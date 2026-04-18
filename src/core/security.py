@@ -27,7 +27,9 @@ def create_access_token(payload: dict[str, Any]) -> str:
     expire = now + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 
     to_encode.update({"exp": expire, "iat": now})
-    return jwt.encode(to_encode, settings.JWT_SECRET, algorithm=ALGORITHM)
+    return jwt.encode(
+        to_encode, settings.JWT_SECRET.get_secret_value(), algorithm=ALGORITHM
+    )
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -42,7 +44,9 @@ def get_password_hash(password: str) -> str:
 # TODO decode and validate -> separate methods
 def decode_jwt(token: str) -> Optional[dict[str, Any]]:
     try:
-        return jwt.decode(token, settings.JWT_SECRET, algorithms=[ALGORITHM])
+        return jwt.decode(
+            token, settings.JWT_SECRET.get_secret_value(), algorithms=[ALGORITHM]
+        )
     except jwt.PyJWTError as e:
         logger.debug("JWT decode/validation failed: %s", e)
         return None
