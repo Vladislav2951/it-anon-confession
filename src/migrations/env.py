@@ -4,6 +4,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from infrastructure.postgres.db import DATABASE_URI
+from infrastructure.postgres.models import *
 
 
 # this is the Alembic Config object, which provides
@@ -21,7 +22,7 @@ config.set_main_option("sqlalchemy.url", DATABASE_URI + "?async_fallback=True")
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = None
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
