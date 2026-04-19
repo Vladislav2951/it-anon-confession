@@ -40,16 +40,10 @@ def get_password_hash(password: str) -> str:
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
 
-#! use claims
-# TODO decode and validate -> separate methods
-def decode_jwt(token: str) -> Optional[dict[str, Any]]:
-    try:
-        return jwt.decode(
-            token, settings.JWT_SECRET.get_secret_value(), algorithms=[ALGORITHM]
-        )
-    except jwt.PyJWTError as e:
-        logger.debug("JWT decode/validation failed: %s", e)
-        return None
+def decode_jwt(token: str) -> dict[str, Any]:
+    return jwt.decode(
+        token, settings.JWT_SECRET.get_secret_value(), algorithms=[ALGORITHM]
+    )
 
 
 # def validate_jwt(token: str) -> bool:
