@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
 
-# * Don't use ORM
+# * Here I don't use ORM
 
 
 class UserRepo(BaseRepo, IUserRepo):

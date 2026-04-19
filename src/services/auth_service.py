@@ -15,28 +15,29 @@ logger = getLogger(__name__)
 
 
 if TYPE_CHECKING:
-    from domain.interfaces.database.uow import IDatabaseUoWFactory
+    from domain.interfaces.database.uow import IDatabaseTransactionFactory
 
 
 class AuthService:
-    def __init__(self, db_uow_factory: IDatabaseUoWFactory):
-        self._db_uow_factory = db_uow_factory
+    def __init__(self, db_transaction_factory: IDatabaseTransactionFactory):
+        self._db_transaction_factory = db_transaction_factory
 
     async def login(self, credentials: LoginInput) -> User:
-        uow = self._db_uow_factory()
-        user = await uow.user_repo.get_one_by_email(credentials.email)
-        if not user:
-            raise BadLogin(f"User {credentials.email} not found")
+        async with self._db_transaction_factory() as t:
+            user = await t.user_repo.get_one_by_email(credentials.email)
+            if not user:
+                raise BadLogin(f"User {credentials.email} not found")
 
-        if not verify_password(
-            credentials.password.get_secret_value(), user.password_hash.get_secret_value()
-        ):
-            raise BadLogin("Incorrect password")
+            if not verify_password(
+                credentials.password.get_secret_value(),
+                user.password_hash.get_secret_value(),
+            ):
+                raise BadLogin("Incorrect password")
 
-        return user
+            return user
 
     async def register(self, register: RegisterInput):
-        async with self._db_uow_factory() as t:
+        async with self._db_transaction_factory() as t:
             if user := await t.user_repo.get_one_by_email(register.email):
                 raise ConflictError(f"User {user.email} is already registered")
 

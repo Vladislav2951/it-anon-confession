@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from domain.interfaces.database import IUserRepo
 
 
-class IDatabaseUoW(ABC):
+class IDatabaseTransactionUoW(ABC):
     @abstractmethod
     async def __aenter__(self) -> Self: ...
 
@@ -29,6 +29,6 @@ class IDatabaseUoW(ABC):
     def user_repo(self) -> IUserRepo: ...
 
 
-class IDatabaseUoWFactory(ABC):
+class IDatabaseTransactionFactory(ABC):
     @abstractmethod
-    def __call__(self) -> IDatabaseUoW: ...
+    def __call__(self) -> IDatabaseTransactionUoW: ...

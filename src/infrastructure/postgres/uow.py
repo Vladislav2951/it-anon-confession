@@ -1,49 +1,68 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING, Optional, Self
 
-from domain.interfaces.database.uow import IDatabaseUoW, IDatabaseUoWFactory
+from domain.interfaces.database.uow import (
+    IDatabaseTransactionFactory,
+    IDatabaseTransactionUoW,
+)
 from infrastructure.postgres.repositories import UserRepo
 
 from .db import async_session_maker
 
 
 if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
+
     from domain.interfaces.database import IUserRepo
 
 
-class SQLAlchemyUoW(IDatabaseUoW):
-    def __init__(self):
-        self._session = async_session_maker()
+class TransactionUoW(IDatabaseTransactionUoW):
+    def __init__(self, session_factory):
+        self._session_factory = session_factory
+        self._session: Optional[AsyncSession] = None
+        self._repositories = {}
+
+    @property
+    def session(self) -> AsyncSession:
+        if self._session is None:
+            raise RuntimeError("UoW is not initialized. Use 'async with'")
+        return self._session
+
+    def _get_repo(self, repo_class):
+        if repo_class not in self._repositories:
+            self._repositories[repo_class] = repo_class(self.session)
+        return self._repositories[repo_class]
 
     async def __aenter__(self) -> Self:
-        self._session = async_session_maker()
-        self._transaction = self._session.begin()
-        await self._transaction.__aenter__()
+        self._session = self._session_factory()
         return self
 
-    async def __aexit__(self, exp_type, exp_val, exp_tb):
-        if exp_type is None:
-            await self._transaction.commit()
-        else:
-            await self._transaction.rollback()
-
-        await self._session.close()
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        try:
+            if exc_type is not None:
+                await self.rollback()
+            else:
+                await self.commit()
+        finally:
+            await self.close()
 
     async def commit(self):
-        await self._transaction.commit()
+        await self.session.commit()
 
     async def rollback(self):
-        await self._transaction.rollback()
+        await self.session.rollback()
 
     async def close(self):
-        await self._session.close()
+        if self._session:
+            await self._session.close()
+            self._session = None
 
     @property
     def user_repo(self) -> IUserRepo:
-        return UserRepo(self._session)
+        return self._get_repo(UserRepo)
 
 
-class SQLAlchemyUoWFactory(IDatabaseUoWFactory):
-    def __call__(self) -> IDatabaseUoW:
-        return SQLAlchemyUoW()
+class TransactionFactory(IDatabaseTransactionFactory):
+    def __call__(self) -> IDatabaseTransactionUoW:
+        return TransactionUoW(async_session_maker)
