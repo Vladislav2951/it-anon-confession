@@ -6,6 +6,8 @@ class AppErrorCode(str, Enum):
     CONFLICT = "CONFLICT"
     INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR"
     FORBIDDEN = "FORBIDDEN"
+    NOT_FOUND = "NOT_FOUND"
+    UNAUTHORIZED = "UNAUTHORIZED"
 
 
 class AppError(Exception):
@@ -18,6 +20,9 @@ class AppError(Exception):
 # class ForbiddenError(AppError):
 #     def __init__(self, message="Forbidden action"):
 #         super().__init__(message, code=403)
+class NotFoundError(AppError):
+    def __init__(self, message):
+        super().__init__(message, code=AppErrorCode.NOT_FOUND)
 
 
 class BadLogin(AppError):
