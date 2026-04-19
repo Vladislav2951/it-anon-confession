@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import UUID7, BaseModel, EmailStr
 
-from core.validators import NameStr
+from domain.validators import NameStr
 
 
 class UserPublic(BaseModel):

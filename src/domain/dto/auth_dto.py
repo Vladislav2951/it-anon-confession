@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel, EmailStr, SecretStr
 
-from core.validators import NameStr, PasswordStr
+from domain.validators import NameStr, PasswordStr
 
 
 class LoginInput(BaseModel):

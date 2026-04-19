@@ -1,18 +1,15 @@
-from __future__ import annotations
-
 from datetime import datetime
 from typing import Optional
 
-from pydantic import UUID7, BaseModel, EmailStr, SecretStr
+from pydantic import ConfigDict, EmailStr, SecretStr
 
-from core.validators import NameStr
-
-
-# from domain.entities import Permission, Role
+from domain.entities import BaseEntity, Role
+from domain.validators import NameStr
 
 
-class User(BaseModel):
-    id: UUID7
+class User(BaseEntity):
+    model_config = ConfigDict(from_attributes=True)
+
     email: EmailStr
     password_hash: SecretStr
     first_name: NameStr
@@ -20,8 +17,4 @@ class User(BaseModel):
     father_name: Optional[NameStr]
     deleted_at: Optional[datetime] = None
 
-
-# class UserDetailed(User):
-#     # TODO sessions?
-#     roles: list["Role"]
-#     permissions: list["Permission"]
+    roles: Optional[list[Role]] = None

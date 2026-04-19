@@ -3,14 +3,14 @@ from __future__ import annotations
 from logging import getLogger
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import insert, select
-from uuid_extensions import uuid7  # type: ignore[import-untyped]
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload, noload
 
 from domain.dto import RegisterInput
 from domain.entities import User
 from domain.interfaces.database import IUserRepo
+from infrastructure.postgres.models import UserModel
 from infrastructure.postgres.repositories.base import BaseRepo
-from infrastructure.postgres.tables import user_table
 
 
 logger = getLogger(__name__)
@@ -18,64 +18,45 @@ logger = getLogger(__name__)
 
 if TYPE_CHECKING:
     from pydantic import EmailStr
-    from sqlalchemy.ext.asyncio import AsyncSession
-
-
-# * Here I don't use ORM
 
 
 class UserRepo(BaseRepo, IUserRepo):
     async def create(self, register_inp: RegisterInput) -> User:
-        new_id = uuid7()
-
-        stmt = (
-            insert(user_table)
-            .values(
-                id=new_id,
-                email=register_inp.email,
-                password=register_inp.password.get_secret_value(),
-                first_name=register_inp.first_name,
-                last_name=register_inp.last_name,
-                father_name=register_inp.father_name,
-            )
-            .returning(
-                user_table.c.id,
-                user_table.c.email,
-                user_table.c.password.label("password_hash"),
-                user_table.c.first_name,
-                user_table.c.last_name,
-                user_table.c.father_name,
-            )
+        new_user = UserModel(
+            email=register_inp.email,
+            password_hash=register_inp.password.get_secret_value(),
+            first_name=register_inp.first_name,
+            last_name=register_inp.last_name,
+            father_name=register_inp.father_name,
+            roles=[],  # Важно для lazy='raise'
         )
 
+        self._session.add(new_user)
+
+        await self._session.flush()
+
+        return User.model_validate(new_user)
+
+    async def get_one_by_email(
+        self, email: EmailStr, with_roles: bool = False
+    ) -> Optional[User]:
+        stmt = (
+            select(UserModel)
+            .where(UserModel.email == email, UserModel.deleted_at.is_(None))
+            .options()
+        )
+
+        if with_roles:
+            stmt = stmt.options(joinedload(UserModel.roles))
+        else:
+            stmt = stmt.options(noload(UserModel.roles))
+
         result = await self._session.execute(stmt)
         logger.debug("Execute: %s", stmt)
 
-        row = result.mappings().fetchone()
-        if not row:
-            raise RuntimeError("Failed to insert user")
+        user_model = result.scalar_one_or_none()
 
-        return User.model_validate(row)
-
-    async def get_one_by_email(self, email: EmailStr) -> Optional[User]:
-        stmt = select(
-            user_table.c.id,
-            user_table.c.email,
-            user_table.c.password.label("password_hash"),
-            user_table.c.first_name,
-            user_table.c.last_name,
-            user_table.c.father_name,
-        ).where(user_table.c.email == email, user_table.c.deleted_at.is_(None))
-
-        result = await self._session.execute(stmt)
-        logger.debug("Execute: %s", stmt)
-
-        row = result.mappings().fetchone()
-        if not row:
+        if not user_model:
             return None
 
-        return User.model_validate(row)
-
-
-def user_repo_factory(session: AsyncSession):
-    return UserRepo(session)
+        return User.model_validate(user_model)
