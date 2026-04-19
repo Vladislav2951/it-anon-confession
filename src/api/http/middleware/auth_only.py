@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from logging import getLogger
-from typing import TYPE_CHECKING, Annotated, Any
+from typing import TYPE_CHECKING, Annotated
 
 from fastapi import Depends, HTTPException, status
 from starlette.requests import Request
@@ -19,8 +19,8 @@ logger = getLogger(__name__)
 
 async def auth_only(
     request: Request,
-    user_srv: Annotated[UserService, Depends(user_srv)],
-    session_srv: Annotated[SessionService, Depends(session_srv)],
+    user_srv: UserService = Depends(user_srv),
+    session_srv: SessionService = Depends(session_srv),
 ):
 
     session_id = request.cookies.get("session_id")

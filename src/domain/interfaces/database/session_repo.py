@@ -14,3 +14,6 @@ class ISessionRepo(ABC):
 
     @abstractmethod
     async def get_one(self, id: str, with_user: bool = False) -> Optional[Session]: ...
+
+    @abstractmethod
+    async def delete(self, id: str): ...

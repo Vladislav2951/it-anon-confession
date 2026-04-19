@@ -34,9 +34,6 @@ if settings.CORS_ORIGINS:
         allow_headers=["*"],
     )
 
-# Добавляем middleware
-# app.add_middleware(AuthMiddleware) # type: ignore[attr-defined]
-
 # Переопределение обработчика HTTP ошибок
 # app.add_exception_handler(HTTPException, http_exception_handler)
 

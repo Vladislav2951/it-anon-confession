@@ -25,3 +25,7 @@ class SessionService:
     async def get_one(self, id: str) -> Optional[Session]:
         async with self._db_transaction_factory() as t:
             return await t.session_repo.get_one(id)
+
+    async def delete(self, id: str):
+        async with self._db_transaction_factory() as t:
+            return await t.session_repo.delete(id)

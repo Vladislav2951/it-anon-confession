@@ -3,7 +3,7 @@ from __future__ import annotations
 from logging import getLogger
 from typing import Optional
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import joinedload, noload
 
 from domain.entities import Session
@@ -45,3 +45,7 @@ class SessionRepo(BaseRepo, ISessionRepo):
             return None
 
         return Session.model_validate(session_model)
+
+    async def delete(self, id: str):
+        stmt = delete(SessionModel).where(SessionModel.id == id)
+        _ = await self._session.execute(stmt)

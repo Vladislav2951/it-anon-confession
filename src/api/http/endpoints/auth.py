@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
-secure: bool = False
+secure = False
 samesite: Literal["lax", "strict", "none"] | None = "lax"
 if settings.ENV == "prod":
     secure = True
@@ -55,7 +55,6 @@ if settings.ENV == "prod":
 )
 async def login(
     request: Request,
-    response: Response,
     credentials: LoginDTO,
     auth_srv: AuthService = Depends(auth_srv),
     session_srv: SessionService = Depends(session_srv),
@@ -66,7 +65,9 @@ async def login(
         user_agent = request.headers.get("user-agent")
         ip_address = request.client.host if request.client else None
 
-        expires_in_seconds = timedelta(days=settings.SESSION_DURATION_DAYS).seconds
+        expires_in_seconds = int(
+            timedelta(days=settings.SESSION_DURATION_DAYS).total_seconds()
+        )
 
         session = Session.create(
             user_id=user.id,
@@ -76,6 +77,9 @@ async def login(
         )
         await session_srv.save(session)
 
+        response = JSONResponse(
+            content={"message": "Success!"}, status_code=status.HTTP_200_OK
+        )
         response.set_cookie(
             key="session_id",
             value=session.id,
@@ -85,9 +89,7 @@ async def login(
             max_age=expires_in_seconds,
         )
 
-        return JSONResponse(
-            content={"message": "Success!"}, status_code=status.HTTP_200_OK
-        )
+        return response
     except BadLogin:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password"
@@ -103,56 +105,49 @@ async def login(
         )
 
 
-# @router.post(
-#     "/logout",
-#     dependencies=[Depends(auth_only)],
-#     summary="Выйти",
-#     description="Удаляет куку session_id",
-#     response_model=MessageResponse,
-#     responses={
-#         status.HTTP_204_NO_CONTENT: {"description": "Успешно"},
-#         status.HTTP_401_UNAUTHORIZED: {
-#             "description": "Пользователь не авторизован",
-#             "model": ErrorResponse,
-#         },
-#         status.HTTP_422_UNPROCESSABLE_ENTITY: {
-#             "description": "Ошибка валидации входных данных",
-#             "model": ErrorResponse,
-#         },
-#         status.HTTP_500_INTERNAL_SERVER_ERROR: {
-#             "description": "Что-то пошло не так",
-#             "model": ErrorResponse,
-#         },
-#     },
-# )
-# async def logout(request: Request):
-#     if not session_id:
-#         raise HTTPException(
-#             status_code=status.HTTP_401_UNAUTHORIZED,
-#             detail={"code": "UNAUTHORIZED", "message": "Unauthorized"},
-#         )
+@router.post(
+    "/logout",
+    dependencies=[Depends(auth_only)],
+    summary="Logout",
+    response_model=MessageResponse,
+    responses={
+        status.HTTP_200_OK: {"description": "Success"},
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponse},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": ErrorResponse},
+    },
+)
+async def logout(
+    request: Request,
+    response: Response,
+    session_srv: SessionService = Depends(session_srv),
+):
+    session = request.state.session
+    if not session or not isinstance(session, Session):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "code": AppErrorCode.INTERNAL_SERVER_ERROR,
+                "message": "Logout failed",
+            },
+        )
 
-#     except Exception:
-#         logger.exception("Unexpected error while logging out")
+    try:
+        await session_srv.delete(session.id)
+        response.delete_cookie(
+            key="session_id", httponly=True, secure=secure, samesite=samesite
+        )
 
-#         # Даже если на сервере произошла ошибка, мы все равно
-#         # должны попытаться удалить cookie у клиента.
-#         error_response = JSONResponse(
-#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-#             content={
-#                 "error": {
-#                     "code": "INTERNAL_SERVER_ERROR",
-#                     "message": "An unexpected error occurred during logout",
-#                 }
-#             },
-#         )
-#         error_response.delete_cookie(
-#             key="session_id",
-#             httponly=True,
-#             secure=secure,
-#             samesite=samesite,  # Защита от CSRF
-#         )
-#         return error_response
+        return MessageResponse(message="Successfully logged out")
+
+    except Exception as e:
+        logger.exception("Error during logout: %s", str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "code": AppErrorCode.INTERNAL_SERVER_ERROR,
+                "message": "An unexpected error occurred",
+            },
+        )
 
 
 @router.post(
