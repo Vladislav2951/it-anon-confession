@@ -12,7 +12,7 @@ from infrastructure.postgres.models.base import Base
 
 
 if TYPE_CHECKING:
-    from infrastructure.postgres.models import RoleModel
+    from infrastructure.postgres.models import RoleModel, SessionModel
 
 
 class UserModel(Base):
@@ -27,5 +27,9 @@ class UserModel(Base):
     deleted_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
 
     roles: Mapped[list[RoleModel]] = relationship(
-        secondary="user_roles", back_populates="users", lazy="raise"
+        secondary="user_roles", back_populates="users", lazy="raise_on_sql"
+    )
+
+    sessions: Mapped[list[SessionModel]] = relationship(
+        "SessionModel", back_populates="user", cascade="all, delete-orphan"
     )

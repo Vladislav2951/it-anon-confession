@@ -6,7 +6,7 @@ from domain.interfaces.database.uow import (
     IDatabaseTransactionFactory,
     IDatabaseTransactionUoW,
 )
-from infrastructure.postgres.repositories import UserRepo
+from infrastructure.postgres.repositories import SessionRepo, UserRepo
 
 from .db import async_session_maker
 
@@ -14,7 +14,7 @@ from .db import async_session_maker
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
-    from domain.interfaces.database import IUserRepo
+    from domain.interfaces.database import ISessionRepo, IUserRepo
 
 
 class TransactionUoW(IDatabaseTransactionUoW):
@@ -61,6 +61,10 @@ class TransactionUoW(IDatabaseTransactionUoW):
     @property
     def user_repo(self) -> IUserRepo:
         return self._get_repo(UserRepo)
+
+    @property
+    def session_repo(self) -> ISessionRepo:
+        return self._get_repo(SessionRepo)
 
 
 class TransactionFactory(IDatabaseTransactionFactory):

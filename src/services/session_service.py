@@ -3,11 +3,9 @@ from __future__ import annotations
 from logging import getLogger
 from typing import TYPE_CHECKING, Optional
 
-from domain.entities import User
+from domain.entities import Session
+from domain.errors import BadLogin
 
-
-if TYPE_CHECKING:
-    from pydantic import UUID7, EmailStr
 
 logger = getLogger(__name__)
 
@@ -16,14 +14,14 @@ if TYPE_CHECKING:
     from domain.interfaces.database.uow import IDatabaseTransactionFactory
 
 
-class UserService:
+class SessionService:
     def __init__(self, db_transaction_factory: IDatabaseTransactionFactory):
         self._db_transaction_factory = db_transaction_factory
 
-    async def get_one(self, id: UUID7) -> Optional[User]:
+    async def save(self, session: Session):
         async with self._db_transaction_factory() as t:
-            return await t.user_repo.get_one(id)
+            await t.session_repo.create(session)
 
-    async def get_one_by_email(self, email: EmailStr) -> Optional[User]:
+    async def get_one(self, id: str) -> Optional[Session]:
         async with self._db_transaction_factory() as t:
-            return await t.user_repo.get_one_by_email(email)
+            return await t.session_repo.get_one(id)

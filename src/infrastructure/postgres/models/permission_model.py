@@ -21,5 +21,5 @@ class PermissionModel(Base):
     slug: Mapped[str] = mapped_column(String(64), unique=True)
 
     roles: Mapped[list[RoleModel]] = relationship(
-        secondary="role_permissions", back_populates="permissions", lazy="raise"
+        secondary="role_permissions", back_populates="permissions", lazy="raise_on_sql"
     )

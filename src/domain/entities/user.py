@@ -8,8 +8,6 @@ from domain.validators import NameStr
 
 
 class User(BaseEntity):
-    model_config = ConfigDict(from_attributes=True)
-
     email: EmailStr
     password_hash: SecretStr
     first_name: NameStr
@@ -18,3 +16,5 @@ class User(BaseEntity):
     deleted_at: Optional[datetime] = None
 
     roles: Optional[list[Role]] = None
+
+    model_config = ConfigDict(from_attributes=True)

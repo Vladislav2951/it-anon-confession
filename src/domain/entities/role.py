@@ -7,8 +7,8 @@ from domain.validators import NameStr
 
 
 class Role(BaseEntity):
-    model_config = ConfigDict(from_attributes=True)
-
     name: NameStr
 
     permissions: Optional[list[Permission]] = None
+
+    model_config = ConfigDict(from_attributes=True)

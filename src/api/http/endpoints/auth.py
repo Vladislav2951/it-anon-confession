@@ -1,17 +1,18 @@
 from __future__ import annotations
 
+from datetime import timedelta
 import logging
-from typing import TYPE_CHECKING, Annotated, Literal
+from typing import TYPE_CHECKING, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse
 
 from api.http.dto import LoginDTO, RegisterDTO
-from api.http.middleware import guest_only
+from api.http.middleware import auth_only, guest_only
 from api.http.response_models import DataResponse, ErrorResponse, MessageResponse
 from core.config import get_settings
-from core.dependencies import auth_srv
-from core.security import TokenInfo, create_access_token
+from core.dependencies import auth_srv, session_srv
+from domain.entities import Session
 from domain.errors import AppErrorCode, BadLogin, ConflictError
 
 
@@ -19,18 +20,18 @@ settings = get_settings()
 
 
 if TYPE_CHECKING:
-    from services import AuthService
+    from services import AuthService, SessionService
 
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
-# secure: bool = False
-# samesite: Literal["lax", "strict", "none"] | None = "lax"
-# if settings.ENV == "prod":
-#     secure = True
-#     samesite = "lax"
+secure: bool = False
+samesite: Literal["lax", "strict", "none"] | None = "lax"
+if settings.ENV == "prod":
+    secure = True
+    samesite = "lax"
 
 
 @router.post(
@@ -52,34 +53,106 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
         },
     },
 )
-async def login(credentials: LoginDTO, srv: AuthService = Depends(auth_srv)):
+async def login(
+    request: Request,
+    response: Response,
+    credentials: LoginDTO,
+    auth_srv: AuthService = Depends(auth_srv),
+    session_srv: SessionService = Depends(session_srv),
+):
     try:
-        user = await srv.login(credentials)
+        user = await auth_srv.login(credentials)
 
-        jwt_payload = {"sub": str(user.id)}
-        access_token = create_access_token(jwt_payload)
-        token_info = TokenInfo(access_token=access_token, token_type="Bearer")
+        user_agent = request.headers.get("user-agent")
+        ip_address = request.client.host if request.client else None
 
-        # response.set_cookie(
-        #     key="access_token",
-        #     value=access_token,
-        #     httponly=True,          # 🔒 защита от JS (XSS)
-        #     secure=True,            # 🔒 только HTTPS (в dev можно False)
-        #     samesite="lax",         # защита от CSRF
-        #     max_age=60 * 15,        # 15 минут
-        # )
+        expires_in_seconds = timedelta(days=settings.SESSION_DURATION_DAYS).seconds
 
-        headers = {"Authorization": f"Bearer {access_token}"}
-        # TODO передавать токен в теле
+        session = Session.create(
+            user_id=user.id,
+            expires_in_seconds=expires_in_seconds,
+            user_agent=user_agent,
+            ip_address=ip_address,
+        )
+        await session_srv.save(session)
+
+        response.set_cookie(
+            key="session_id",
+            value=session.id,
+            httponly=True,
+            secure=secure,
+            samesite=samesite,
+            max_age=expires_in_seconds,
+        )
+
         return JSONResponse(
-            content={"message": "Success!"},
-            status_code=status.HTTP_200_OK,
-            headers=headers,
+            content={"message": "Success!"}, status_code=status.HTTP_200_OK
         )
     except BadLogin:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password"
         )
+    except Exception:
+        logger.exception("Unexpected error while logging %s user", credentials.email)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "code": AppErrorCode.INTERNAL_SERVER_ERROR,
+                "message": "An unexpected error occurred",
+            },
+        )
+
+
+# @router.post(
+#     "/logout",
+#     dependencies=[Depends(auth_only)],
+#     summary="Выйти",
+#     description="Удаляет куку session_id",
+#     response_model=MessageResponse,
+#     responses={
+#         status.HTTP_204_NO_CONTENT: {"description": "Успешно"},
+#         status.HTTP_401_UNAUTHORIZED: {
+#             "description": "Пользователь не авторизован",
+#             "model": ErrorResponse,
+#         },
+#         status.HTTP_422_UNPROCESSABLE_ENTITY: {
+#             "description": "Ошибка валидации входных данных",
+#             "model": ErrorResponse,
+#         },
+#         status.HTTP_500_INTERNAL_SERVER_ERROR: {
+#             "description": "Что-то пошло не так",
+#             "model": ErrorResponse,
+#         },
+#     },
+# )
+# async def logout(request: Request):
+#     if not session_id:
+#         raise HTTPException(
+#             status_code=status.HTTP_401_UNAUTHORIZED,
+#             detail={"code": "UNAUTHORIZED", "message": "Unauthorized"},
+#         )
+
+#     except Exception:
+#         logger.exception("Unexpected error while logging out")
+
+#         # Даже если на сервере произошла ошибка, мы все равно
+#         # должны попытаться удалить cookie у клиента.
+#         error_response = JSONResponse(
+#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#             content={
+#                 "error": {
+#                     "code": "INTERNAL_SERVER_ERROR",
+#                     "message": "An unexpected error occurred during logout",
+#                 }
+#             },
+#         )
+#         error_response.delete_cookie(
+#             key="session_id",
+#             httponly=True,
+#             secure=secure,
+#             samesite=samesite,  # Защита от CSRF
+#         )
+#         return error_response
 
 
 @router.post(
@@ -129,6 +202,6 @@ async def register(data: RegisterDTO, srv: AuthService = Depends(auth_srv)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
                 "code": AppErrorCode.INTERNAL_SERVER_ERROR,
-                "message": "An unexpected error occurred while registering a user",
+                "message": "An unexpected error occurred",
             },
         )

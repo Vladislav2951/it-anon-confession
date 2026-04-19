@@ -1,15 +1,20 @@
 from infrastructure.postgres.uow import TransactionFactory
-from services import AuthService, UserService
+from services import AuthService, SessionService, UserService
 
 
 _database_uow_factory = TransactionFactory()
 
 _auth_service = AuthService(_database_uow_factory)
+_session_service = SessionService(_database_uow_factory)
 _user_service = UserService(_database_uow_factory)
 
 
 def auth_srv() -> AuthService:
     return _auth_service
+
+
+def session_srv() -> SessionService:
+    return _session_service
 
 
 def user_srv() -> UserService:

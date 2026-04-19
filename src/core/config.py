@@ -39,8 +39,7 @@ class Settings(BaseSettings):
     PORT: int = 8000
     LOG_LEVEL: LogLevel = LogLevel.INFO
 
-    JWT_SECRET: SecretStr
-    ACCESS_TOKEN_EXPIRE_MINUTES: PositiveInt = 15
+    SESSION_DURATION_DAYS: PositiveInt = 30
 
     CORS_ORIGINS: list[str] = []
 

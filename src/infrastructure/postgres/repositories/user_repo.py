@@ -17,7 +17,7 @@ logger = getLogger(__name__)
 
 
 if TYPE_CHECKING:
-    from pydantic import EmailStr
+    from pydantic import UUID7, EmailStr
 
 
 class UserRepo(BaseRepo, IUserRepo):
@@ -37,13 +37,29 @@ class UserRepo(BaseRepo, IUserRepo):
 
         return User.model_validate(new_user)
 
+    async def get_one(self, id: UUID7, with_roles: bool = False) -> Optional[User]:
+        stmt = select(UserModel).where(UserModel.id == id, UserModel.deleted_at.is_(None))
+
+        if with_roles:
+            stmt = stmt.options(joinedload(UserModel.roles))
+        else:
+            stmt = stmt.options(noload(UserModel.roles))
+
+        result = await self._session.execute(stmt)
+        logger.debug("Execute: %s", stmt)
+
+        user_model = result.scalar_one_or_none()
+
+        if not user_model:
+            return None
+
+        return User.model_validate(user_model)
+
     async def get_one_by_email(
         self, email: EmailStr, with_roles: bool = False
     ) -> Optional[User]:
-        stmt = (
-            select(UserModel)
-            .where(UserModel.email == email, UserModel.deleted_at.is_(None))
-            .options()
+        stmt = select(UserModel).where(
+            UserModel.email == email, UserModel.deleted_at.is_(None)
         )
 
         if with_roles:
