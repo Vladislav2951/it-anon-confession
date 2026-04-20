@@ -46,7 +46,6 @@ class UserRepo(BaseRepo, IUserRepo):
             stmt = stmt.options(noload(UserModel.roles))
 
         result = await self._session.execute(stmt)
-        logger.debug("Execute: %s", stmt)
 
         user_model = result.scalar_one_or_none()
 

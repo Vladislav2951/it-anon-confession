@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 class SessionModel(Base):
     __tablename__ = "sessions"
 
-    id: Mapped[str] = mapped_column(String, primary_key=True)
+    token_hash: Mapped[str] = mapped_column("id", String, primary_key=True)
 
     user_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False

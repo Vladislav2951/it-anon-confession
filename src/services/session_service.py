@@ -22,12 +22,12 @@ class SessionService:
         async with self._db_transaction_factory() as t:
             await t.session_repo.create(session)
 
-    async def get_one(self, raw_id: str) -> Optional[Session]:
-        session_id_hash = get_token_hash(raw_id)
+    async def get_one(self, raw_token: str) -> Optional[Session]:
+        token_hash = get_token_hash(raw_token)
         async with self._db_transaction_factory() as t:
-            return await t.session_repo.get_one(session_id_hash)
+            return await t.session_repo.get_one(token_hash)
 
-    async def delete(self, raw_id: str):
-        session_id_hash = get_token_hash(raw_id)
+    async def delete(self, raw_token: str):
+        token_hash = get_token_hash(raw_token)
         async with self._db_transaction_factory() as t:
-            return await t.session_repo.delete(session_id_hash)
+            return await t.session_repo.delete(token_hash)

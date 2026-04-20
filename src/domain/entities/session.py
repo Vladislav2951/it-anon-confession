@@ -9,7 +9,7 @@ from core.security import get_token_hash
 
 
 class Session(BaseModel):
-    id: str
+    token_hash: str
     user_id: UUID7
     expires_at: datetime
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -33,7 +33,7 @@ class Session(BaseModel):
     ) -> Session:
         now = datetime.now(timezone.utc)
         return cls(
-            id=get_token_hash(token),
+            token_hash=get_token_hash(token),
             user_id=user_id,
             created_at=now,
             expires_at=now + timedelta(seconds=expires_in_seconds),

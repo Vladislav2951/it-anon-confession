@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class SessionRepo(BaseRepo, ISessionRepo):
     async def create(self, session: Session):
         new_session = SessionModel(
-            id=session.id,
+            id=session.token_hash,
             user_id=session.user_id,
             expires_at=session.expires_at,
             created_at=session.created_at,
@@ -29,7 +29,7 @@ class SessionRepo(BaseRepo, ISessionRepo):
         self._session.add(new_session)
 
     async def get_one(self, id: str, with_user: bool = False) -> Optional[Session]:
-        stmt = select(SessionModel).where(SessionModel.id == id)
+        stmt = select(SessionModel).where(SessionModel.token_hash == id)
 
         if with_user:
             stmt = stmt.options(joinedload(SessionModel.user))
@@ -37,7 +37,6 @@ class SessionRepo(BaseRepo, ISessionRepo):
             stmt = stmt.options(noload(SessionModel.user))
 
         result = await self._session.execute(stmt)
-        logger.debug("Execute: %s", stmt)
 
         session_model = result.scalar_one_or_none()
 
@@ -47,5 +46,5 @@ class SessionRepo(BaseRepo, ISessionRepo):
         return Session.model_validate(session_model)
 
     async def delete(self, id: str):
-        stmt = delete(SessionModel).where(SessionModel.id == id)
+        stmt = delete(SessionModel).where(SessionModel.token_hash == id)
         _ = await self._session.execute(stmt)
