@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Annotated
+from typing import TYPE_CHECKING
 
 from fastapi import Depends, HTTPException, status
 from starlette.requests import Request
@@ -41,8 +41,7 @@ async def auth_only(
         raise unauthorized_exception
 
     if session.is_expired():
-        # TODO delete?
-        # await session_srv.delete(session_id)
+        await session_srv.delete(session_id)
         raise unauthorized_exception
 
     user = await user_srv.get_one(session.user_id)

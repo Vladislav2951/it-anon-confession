@@ -1,14 +1,11 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-import secrets
 from typing import TYPE_CHECKING, Optional
 
 from pydantic import UUID7, BaseModel, ConfigDict, Field
 
-
-if TYPE_CHECKING:
-    from domain.entities import User
+from core.security import get_token_hash
 
 
 class Session(BaseModel):
@@ -28,6 +25,7 @@ class Session(BaseModel):
     @classmethod
     def create(
         cls,
+        token: str,
         user_id: UUID7,
         expires_in_seconds: int,
         user_agent: str | None = None,
@@ -35,7 +33,7 @@ class Session(BaseModel):
     ) -> Session:
         now = datetime.now(timezone.utc)
         return cls(
-            id=secrets.token_urlsafe(64),
+            id=get_token_hash(token),
             user_id=user_id,
             created_at=now,
             expires_at=now + timedelta(seconds=expires_in_seconds),

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 import logging
+import secrets
 from typing import TYPE_CHECKING, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
@@ -68,8 +69,10 @@ async def login(
         expires_in_seconds = int(
             timedelta(days=settings.SESSION_DURATION_DAYS).total_seconds()
         )
+        token = secrets.token_urlsafe(64)
 
         session = Session.create(
+            token=token,
             user_id=user.id,
             expires_in_seconds=expires_in_seconds,
             user_agent=user_agent,
@@ -82,7 +85,7 @@ async def login(
         )
         response.set_cookie(
             key="session_id",
-            value=session.id,
+            value=token,
             httponly=True,
             secure=secure,
             samesite=samesite,
@@ -116,13 +119,9 @@ async def login(
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": ErrorResponse},
     },
 )
-async def logout(
-    request: Request,
-    response: Response,
-    session_srv: SessionService = Depends(session_srv),
-):
-    session = request.state.session
-    if not session or not isinstance(session, Session):
+async def logout(request: Request, session_srv: SessionService = Depends(session_srv)):
+    session_id = request.cookies.get("session_id")
+    if not session_id:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
@@ -132,12 +131,11 @@ async def logout(
         )
 
     try:
-        await session_srv.delete(session.id)
-        response.delete_cookie(
-            key="session_id", httponly=True, secure=secure, samesite=samesite
-        )
+        await session_srv.delete(session_id)
 
-        return MessageResponse(message="Successfully logged out")
+        response = JSONResponse({"message": "Successfully logged out"})
+        response.delete_cookie(key="session_id")
+        return response
 
     except Exception as e:
         logger.exception("Error during logout: %s", str(e))
