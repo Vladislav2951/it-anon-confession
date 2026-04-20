@@ -9,7 +9,7 @@ from domain.validators import NameStr
 class Role(BaseEntity):
     name: NameStr
 
-    permissions: Optional[list[Permission]] = None
+    permissions: list[Permission] = []
     is_system: bool = False
 
     model_config = ConfigDict(from_attributes=True)
