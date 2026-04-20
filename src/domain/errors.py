@@ -3,6 +3,7 @@ from typing import Optional
 
 
 class AppErrorCode(str, Enum):
+    BAD_REQUEST = "BAD_REQUEST"
     BAD_LOGIN = "BAD_LOGIN"
     CONFLICT = "CONFLICT"
     INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR"
@@ -28,7 +29,7 @@ class NotFoundError(AppError):
         super().__init__(message, code=AppErrorCode.NOT_FOUND)
 
 
-class BadLogin(AppError):
+class BadLoginError(AppError):
     def __init__(self, message: Optional[str] = None):
         super().__init__(message, code=AppErrorCode.BAD_LOGIN)
 
@@ -36,3 +37,8 @@ class BadLogin(AppError):
 class ConflictError(AppError):
     def __init__(self, message: Optional[str] = None):
         super().__init__(message, code=AppErrorCode.CONFLICT)
+
+
+class UpdateError(AppError):
+    def __init__(self, message: Optional[str] = None):
+        super().__init__(message, code=AppErrorCode.BAD_REQUEST)

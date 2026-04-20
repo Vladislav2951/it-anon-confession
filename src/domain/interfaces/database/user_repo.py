@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Optional
 if TYPE_CHECKING:
     from pydantic import UUID7, EmailStr
 
-    from domain.dto import RegisterInput
+    from domain.dto import ChangePasswordUserInput, PatchUpdateUserInput, RegisterInput
     from domain.entities import User
     from domain.interfaces.database.filters import UserFilter
 
@@ -28,6 +28,11 @@ class IUserRepo(ABC):
     async def get_all(
         self, with_roles: bool = False, filter: Optional[UserFilter] = None
     ) -> list[User]: ...
+
+    @abstractmethod
+    async def update(
+        self, id: UUID7, update_inp: ChangePasswordUserInput | PatchUpdateUserInput
+    ) -> User: ...
 
     @abstractmethod
     async def soft_delete(self, id: UUID7): ...

@@ -8,7 +8,7 @@ from pydantic import SecretStr
 from core.security import get_password_hash, verify_password
 from domain.dto import LoginInput, RegisterInput
 from domain.entities import User
-from domain.errors import BadLogin, ConflictError
+from domain.errors import BadLoginError, ConflictError
 
 
 logger = logging.getLogger(__name__)
@@ -26,13 +26,13 @@ class AuthService:
         async with self._db_transaction_factory() as t:
             user = await t.user_repo.get_one_by_email(credentials.email)
             if not user:
-                raise BadLogin(f"User {credentials.email} not found")
+                raise BadLoginError(f"User {credentials.email} not found")
 
             if not verify_password(
                 credentials.password.get_secret_value(),
                 user.password_hash.get_secret_value(),
             ):
-                raise BadLogin("Incorrect password")
+                raise BadLoginError("Incorrect password")
 
             return user
 

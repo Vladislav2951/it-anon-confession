@@ -7,8 +7,9 @@ from typing import TYPE_CHECKING, Optional
 from sqlalchemy import select, update
 from sqlalchemy.orm import joinedload, noload
 
-from domain.dto import RegisterInput
+from domain.dto import ChangePasswordUserInput, PatchUpdateUserInput, RegisterInput
 from domain.entities import User
+from domain.errors import UpdateError
 from domain.interfaces.database import IUserRepo
 from infrastructure.postgres.models import RoleModel, UserModel
 from infrastructure.postgres.repositories.base import BaseRepo
@@ -103,6 +104,30 @@ class UserRepo(BaseRepo, IUserRepo):
             users.append(User.model_validate(el))
 
         return users
+
+    async def update(
+        self, id: UUID7, update_inp: ChangePasswordUserInput | PatchUpdateUserInput
+    ) -> User:
+        if isinstance(update_inp, ChangePasswordUserInput):
+            to_update = {"password_hash": update_inp.password_hash.get_secret_value()}
+        else:
+            to_update = update_inp.model_dump(exclude_unset=True)
+
+        if not to_update:
+            raise UpdateError(f"Nothing to update for {id}")
+
+        stmt = (
+            update(UserModel)
+            .where(UserModel.id == id, UserModel.deleted_at.is_(None))
+            .values(**to_update)
+            .returning(UserModel)
+            .options(noload(UserModel.roles))
+        )
+
+        result = await self._session.execute(stmt)
+        user = result.scalar_one()
+
+        return User.model_validate(user)
 
     async def soft_delete(self, id: UUID7):
         stmt = (

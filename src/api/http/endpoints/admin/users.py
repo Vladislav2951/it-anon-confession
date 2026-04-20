@@ -32,13 +32,14 @@ router = APIRouter(prefix="/users", tags=["Users"])
     "/{user_id}",
     dependencies=[
         Depends(auth_only),
-        Depends(PermissionRequired(PermissionSlugs.users_delete.value)),
+        Depends(PermissionRequired(PermissionSlugs.users_delete_any.value)),
     ],
     summary="Delete account",
     response_model=MessageResponse,
     responses={
         status.HTTP_200_OK: {"description": "Success"},
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponse},
+        status.HTTP_403_FORBIDDEN: {"model": ErrorResponse},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": ErrorResponse},
     },
 )

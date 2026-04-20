@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class SessionRepo(BaseRepo, ISessionRepo):
     async def create(self, session: Session):
         new_session = SessionModel(
-            id=session.token_hash,
+            token_hash=session.token_hash,
             user_id=session.user_id,
             expires_at=session.expires_at,
             created_at=session.created_at,
