@@ -7,14 +7,6 @@ from colorama import Fore, Style, init
 init(autoreset=True)
 
 
-class LogLevel(str, Enum):
-    DEBUG = "DEBUG"
-    INFO = "INFO"
-    WARNING = "WARNING"
-    ERROR = "ERROR"
-    CRITICAL = "CRITICAL"
-
-
 class ColoredFormatter(logging.Formatter):
     LEVEL_COLORS = {
         logging.DEBUG: Fore.CYAN,
@@ -30,10 +22,7 @@ class ColoredFormatter(logging.Formatter):
         orig_msg = record.msg
 
         color = self.LEVEL_COLORS.get(record.levelno, Fore.WHITE)
-
-        # Фиксированная ширина 8 символов
         record.levelname = f"{color}{orig_levelname:<8}{Style.RESET_ALL}"
-
         result = super().format(record)
 
         # Возвращение оригинального формата
@@ -57,7 +46,6 @@ def test_logging():
     logger.error("Example of ERROR log")
     logger.critical("Example of CRITICAL log")
 
-    # Проверка логирования исключений
     try:
         result = 10 / 0
     except ZeroDivisionError:
@@ -66,28 +54,25 @@ def test_logging():
     logger.info("=== Logging Test Complete ===")
 
 
-def setup_logging(log_level: LogLevel = LogLevel.INFO):
-    log_format = "%(asctime)s %(levelname)-8s %(message)s"
-
-    formatter = ColoredFormatter(log_format, datefmt="%Y-%m-%d %H:%M:%S")
+def setup_logging(log_level):
+    format = "%(asctime)s %(levelname)-8s %(message)s"
+    formatter = ColoredFormatter(format, datefmt="%d-%m-%Y %H:%M:%S")
 
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
 
-    intercept_loggers = (
-        None,  # root логгер
+    intercept_loggers = [
+        None,
         "uvicorn",
         "uvicorn.access",
         "uvicorn.error",
+        # "sqlalchemy.engine",
         "fastapi",
-    )
+    ]
 
     for logger_name in intercept_loggers:
         logger = logging.getLogger(logger_name)
-        logger.handlers = []
+        logger.handlers = []  # Очистка старых обработчиков, чтобы логи не дублировались
         logger.addHandler(handler)
-        logger.setLevel(log_level.upper())
-        # Запрещаем логам "пробрасываться" выше, чтобы не дублировать в root
-        logger.propagate = False
-
-    return logging.getLogger("app")
+        logger.setLevel(log_level)
+        logger.propagate = False  # Запрет передачи логов выше по иерархии

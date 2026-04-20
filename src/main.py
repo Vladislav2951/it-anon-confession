@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
+import logging
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 from api.http.routes import routers
@@ -10,7 +11,8 @@ from libs.logger.custom_logger import setup_logging
 
 settings = get_settings()
 
-logger = setup_logging(settings.LOG_LEVEL)
+setup_logging(settings.LOG_LEVEL)
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager

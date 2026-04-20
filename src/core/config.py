@@ -3,12 +3,10 @@ from importlib.metadata import PackageNotFoundError, version
 from ipaddress import IPv4Address
 from pathlib import Path
 import tomllib
-from typing import ClassVar, Literal, Union
+from typing import Literal, Union
 
 from pydantic import IPvAnyAddress, PositiveInt, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-from libs.logger.custom_logger import LogLevel
 
 
 _BASE_DIR = Path(__file__).parent.parent.parent
@@ -37,7 +35,7 @@ class Settings(BaseSettings):
 
     HOST: Union[IPvAnyAddress, Literal["localhost"]] = IPv4Address("0.0.0.0")
     PORT: int = 8000
-    LOG_LEVEL: LogLevel = LogLevel.INFO
+    LOG_LEVEL: str = "INFO"
 
     SESSION_DURATION_DAYS: PositiveInt = 30
 
