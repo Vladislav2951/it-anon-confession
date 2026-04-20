@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from logging import getLogger
+import logging
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import select
@@ -13,7 +13,7 @@ from infrastructure.postgres.models import UserModel
 from infrastructure.postgres.repositories.base import BaseRepo
 
 
-logger = getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 if TYPE_CHECKING:

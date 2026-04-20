@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from logging import getLogger
+import logging
 from typing import TYPE_CHECKING, Optional
 
 from domain.entities import User
@@ -9,7 +9,7 @@ from domain.entities import User
 if TYPE_CHECKING:
     from pydantic import UUID7, EmailStr
 
-logger = getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 if TYPE_CHECKING:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from logging import getLogger
+import logging
 from typing import Optional
 
 from sqlalchemy import delete, select
@@ -12,7 +12,7 @@ from infrastructure.postgres.models import SessionModel
 from infrastructure.postgres.repositories.base import BaseRepo
 
 
-logger = getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class SessionRepo(BaseRepo, ISessionRepo):

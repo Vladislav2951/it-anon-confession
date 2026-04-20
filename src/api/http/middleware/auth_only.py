@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from logging import getLogger
+import logging
 from typing import TYPE_CHECKING, Annotated
 
 from fastapi import Depends, HTTPException, status
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from services import SessionService, UserService
 
 
-logger = getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 async def auth_only(

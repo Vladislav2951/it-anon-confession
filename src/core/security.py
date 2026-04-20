@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from logging import getLogger
+import logging
 from typing import Any, Literal, Optional
 
 import bcrypt
@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from core.config import get_settings
 
 
-logger = getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 settings = get_settings()
 

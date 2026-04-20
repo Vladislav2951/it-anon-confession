@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from logging import getLogger
+import logging
 from typing import TYPE_CHECKING
 
 from pydantic import SecretStr
@@ -11,7 +11,7 @@ from domain.entities import User
 from domain.errors import BadLogin, ConflictError
 
 
-logger = getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 if TYPE_CHECKING:

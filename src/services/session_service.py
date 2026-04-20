@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from logging import getLogger
+import logging
 from typing import TYPE_CHECKING, Optional
 
 from domain.entities import Session
 from domain.errors import BadLogin
 
 
-logger = getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 if TYPE_CHECKING:
