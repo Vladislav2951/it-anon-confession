@@ -10,5 +10,6 @@ class Role(BaseEntity):
     name: NameStr
 
     permissions: Optional[list[Permission]] = None
+    is_system: bool = False
 
     model_config = ConfigDict(from_attributes=True)
