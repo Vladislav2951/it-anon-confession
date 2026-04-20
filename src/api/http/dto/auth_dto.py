@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, SecretStr, model_validator
+from pydantic import SecretStr, model_validator
 
 from domain.dto import LoginInput, RegisterInput
 

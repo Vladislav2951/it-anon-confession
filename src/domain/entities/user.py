@@ -4,15 +4,14 @@ from typing import Optional
 from pydantic import ConfigDict, EmailStr, SecretStr
 
 from domain.entities import BaseEntity, Role
-from domain.validators import NameStr, PermissionSlug
+from domain.validators import BioString, NameStr, NicknameStr, PermissionSlug
 
 
 class User(BaseEntity):
     email: EmailStr
+    nickname: NicknameStr
+    bio: Optional[BioString]
     password_hash: SecretStr
-    first_name: NameStr
-    last_name: NameStr
-    father_name: Optional[NameStr]
     deleted_at: Optional[datetime] = None
 
     roles: Optional[list[Role]] = None

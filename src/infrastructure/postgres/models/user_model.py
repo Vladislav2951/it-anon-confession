@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 import uuid
 
-from sqlalchemy import TIMESTAMP, UUID
+from sqlalchemy import TIMESTAMP, UUID, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid_extensions import uuid7  # type: ignore[import-untyped]
 
@@ -21,9 +21,8 @@ class UserModel(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid7)
     email: Mapped[str] = mapped_column(unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column("password", nullable=False)
-    first_name: Mapped[str] = mapped_column(nullable=False)
-    last_name: Mapped[str] = mapped_column(nullable=False)
-    father_name: Mapped[str] = mapped_column(nullable=True)
+    nickname: Mapped[str] = mapped_column(String(16), unique=True, nullable=False)
+    bio: Mapped[Optional[str]] = mapped_column(String(1000), nullable=True)
     deleted_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
 
     roles: Mapped[list[RoleModel]] = relationship(

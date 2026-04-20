@@ -58,7 +58,13 @@ async def get(identifier: EmailStr | UUID7, user_srv: UserService = Depends(user
             user = await user_srv.get_one(identifier)
 
         if user:
-            return JSONResponse({"data": user.model_dump(mode="json")})
+            return JSONResponse(
+                {
+                    "data": UserPublic.model_validate(
+                        user, from_attributes=True
+                    ).model_dump(mode="json")
+                }
+            )
         else:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -133,7 +139,13 @@ async def update(
 ):
     try:
         user = await user_srv.update(user_id, update_data)
-        return JSONResponse({"data": user.model_dump(mode="json")})
+        return JSONResponse(
+            {
+                "data": UserPublic.model_validate(user, from_attributes=True).model_dump(
+                    mode="json"
+                )
+            }
+        )
     except Exception as e:
         logger.exception("Error during user patch update: %s", str(e))
         raise HTTPException(

@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel, EmailStr, SecretStr
 
-from domain.validators import NameStr, PasswordStr
+from domain.validators import BioString, NameStr, NicknameStr, PasswordStr
 
 
 class LoginInput(BaseModel):
@@ -12,7 +12,6 @@ class LoginInput(BaseModel):
 
 class RegisterInput(BaseModel):
     email: EmailStr
+    nickname: NicknameStr
+    bio: Optional[BioString]
     password: PasswordStr
-    first_name: NameStr
-    last_name: NameStr
-    father_name: Optional[NameStr]

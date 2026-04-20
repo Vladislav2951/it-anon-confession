@@ -1,8 +1,8 @@
 """init
 
-Revision ID: 16c844651141
+Revision ID: 4fc4f6cba8a9
 Revises: 
-Create Date: 2026-04-20 19:50:29.272450
+Create Date: 2026-04-21 01:03:35.272847
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '16c844651141'
+revision: str = '4fc4f6cba8a9'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -39,12 +39,12 @@ def upgrade() -> None:
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('email', sa.String(), nullable=False),
     sa.Column('password', sa.String(), nullable=False),
-    sa.Column('first_name', sa.String(), nullable=False),
-    sa.Column('last_name', sa.String(), nullable=False),
-    sa.Column('father_name', sa.String(), nullable=True),
+    sa.Column('nickname', sa.String(length=16), nullable=False),
+    sa.Column('bio', sa.String(length=1000), nullable=True),
     sa.Column('deleted_at', sa.TIMESTAMP(timezone=True), nullable=True),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('email')
+    sa.UniqueConstraint('email'),
+    sa.UniqueConstraint('nickname')
     )
     op.create_table('role_permissions',
     sa.Column('role_id', sa.UUID(), nullable=False),

@@ -11,6 +11,7 @@ from domain.errors import AppErrorCode
 
 
 if TYPE_CHECKING:
+    from domain.entities import User
     from services import SessionService, UserService
 
 
@@ -44,7 +45,7 @@ async def auth_only(
         await session_srv.delete(session_id)
         raise unauthorized_exception
 
-    user = await user_srv.get_one(session.user_id)
+    user: User | None = await user_srv.get_one(session.user_id)
     if not user:
         raise unauthorized_exception
 

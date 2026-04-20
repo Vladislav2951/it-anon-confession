@@ -6,12 +6,7 @@ from typing import TYPE_CHECKING, Optional
 from pydantic import SecretStr
 
 from core.security import get_password_hash, verify_password
-from domain.dto import (
-    ChangePasswordUserInput,
-    LoginInput,
-    PatchUpdateUserInput,
-    UserPublic,
-)
+from domain.dto import ChangePasswordUserInput, PatchUpdateUserInput
 from domain.entities import User
 from domain.enums import PermissionSlugs, SystemRole
 from domain.errors import BadLoginError, ForbiddenError, NotFoundError
@@ -22,7 +17,6 @@ if TYPE_CHECKING:
     from pydantic import UUID7, EmailStr
 
     from domain.interfaces.database.uow import IDatabaseTransactionFactory
-    from services.auth_service import AuthService
 
 logger = logging.getLogger(__name__)
 
@@ -31,24 +25,17 @@ class UserService:
     def __init__(self, db_transaction_factory: IDatabaseTransactionFactory):
         self._db_transaction_factory = db_transaction_factory
 
-    async def get_one(self, id: UUID7) -> Optional[UserPublic]:
+    async def get_one(self, id: UUID7) -> Optional[User]:
         async with self._db_transaction_factory() as t:
-            if user := await t.user_repo.get_one(id):
-                return UserPublic.model_validate(user, from_attributes=True)
+            return await t.user_repo.get_one(id)
 
-            return None
-
-    async def get_one_by_email(self, email: EmailStr) -> Optional[UserPublic]:
+    async def get_one_by_email(self, email: EmailStr) -> Optional[User]:
         async with self._db_transaction_factory() as t:
-            if user := await t.user_repo.get_one_by_email(email):
-                return UserPublic.model_validate(user, from_attributes=True)
+            return await t.user_repo.get_one_by_email(email)
 
-            return None
-
-    async def update(self, id: UUID7, update_inp: PatchUpdateUserInput) -> UserPublic:
+    async def update(self, id: UUID7, update_inp: PatchUpdateUserInput) -> User:
         async with self._db_transaction_factory() as t:
-            user = await t.user_repo.update(id, update_inp)
-            return UserPublic.model_validate(user, from_attributes=True)
+            return await t.user_repo.update(id, update_inp)
 
     async def change_password(
         self, id: UUID7, old_password: SecretStr, password: PasswordStr

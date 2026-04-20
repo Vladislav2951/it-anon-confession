@@ -30,10 +30,9 @@ class UserRepo(BaseRepo, IUserRepo):
     async def create(self, register_inp: RegisterInput) -> User:
         new_user = UserModel(
             email=register_inp.email,
+            nickname=register_inp.nickname,
+            bio=register_inp.bio,
             password_hash=register_inp.password.get_secret_value(),
-            first_name=register_inp.first_name,
-            last_name=register_inp.last_name,
-            father_name=register_inp.father_name,
             roles=[],  # Важно для lazy='raise'
         )
 

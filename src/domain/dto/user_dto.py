@@ -2,23 +2,21 @@ from typing import Optional
 
 from pydantic import UUID7, BaseModel, EmailStr, Field, SecretStr
 
-from domain.validators import NameStr
+from domain.validators import BioString, NicknameStr
 
 
 class UserPublic(BaseModel):
     id: UUID7
     email: EmailStr
-    first_name: NameStr
-    last_name: NameStr
-    father_name: Optional[NameStr] = None
+    nickname: NicknameStr
+    bio: Optional[BioString]
 
 
 class PatchUpdateUserInput(BaseModel):
     email: EmailStr = Field(default=None)  # type: ignore[assignment]
-    first_name: NameStr = Field(default=None)  # type: ignore[assignment]
-    last_name: NameStr = Field(default=None)  # type: ignore[assignment]
+    nickname: NicknameStr = Field(default=None)  # type: ignore[assignment]
 
-    father_name: Optional[NameStr] = None
+    bio: Optional[BioString] = None
 
 
 class ChangePasswordUserInput(BaseModel):
