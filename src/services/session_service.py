@@ -11,6 +11,8 @@ logger = logging.getLogger(__name__)
 
 
 if TYPE_CHECKING:
+    from pydantic import UUID7
+
     from domain.interfaces.database.uow import IDatabaseTransactionFactory
 
 
@@ -31,3 +33,7 @@ class SessionService:
         token_hash = get_token_hash(raw_token)
         async with self._db_transaction_factory() as t:
             return await t.session_repo.delete(token_hash)
+
+    async def delete_all_for_user(self, user_id: UUID7):
+        async with self._db_transaction_factory() as t:
+            return await t.session_repo.delete_all_for_user(user_id)

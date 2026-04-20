@@ -5,23 +5,24 @@ import logging
 import secrets
 from typing import TYPE_CHECKING, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 
 from api.http.dto import LoginDTO, RegisterDTO
-from api.http.middleware import auth_only, guest_only
-from api.http.response_models import DataResponse, ErrorResponse, MessageResponse
+from api.http.middleware import auth_only, get_current_user, guest_only
+from api.http.response_models import ErrorResponse, MessageResponse
 from core.config import get_settings
-from core.dependencies import auth_srv, session_srv
+from core.dependencies import auth_srv, session_srv, user_srv
 from domain.entities import Session
-from domain.errors import AppErrorCode, BadLogin, ConflictError
+from domain.errors import AppErrorCode, BadLogin, ConflictError, ForbiddenError
 
 
 settings = get_settings()
 
 
 if TYPE_CHECKING:
-    from services import AuthService, SessionService
+    from domain.entities import User
+    from services import AuthService, SessionService, UserService
 
 
 logger = logging.getLogger(__name__)
@@ -191,6 +192,38 @@ async def register(data: RegisterDTO, srv: AuthService = Depends(auth_srv)):
 
     except Exception:
         logger.exception("Unexpected error while registering %s user", data.email)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "code": AppErrorCode.INTERNAL_SERVER_ERROR,
+                "message": "An unexpected error occurred",
+            },
+        )
+
+
+@router.delete(
+    "/me",
+    dependencies=[Depends(auth_only)],
+    summary="Delete self account",
+    response_model=MessageResponse,
+    responses={
+        status.HTTP_200_OK: {"description": "Success"},
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponse},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": ErrorResponse},
+    },
+)
+async def delete_self(
+    user: User = Depends(get_current_user), user_srv: UserService = Depends(user_srv)
+):
+    try:
+        await user_srv.soft_delete(user.id, user)
+
+        response = JSONResponse({"message": "Account has been deleted"})
+        response.delete_cookie(key="session_id")
+        return response
+
+    except Exception as e:
+        logger.exception("Error during self account delete: %s", str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={

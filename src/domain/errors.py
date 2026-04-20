@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional
 
 
 class AppErrorCode(str, Enum):
@@ -11,25 +12,27 @@ class AppErrorCode(str, Enum):
 
 
 class AppError(Exception):
-    def __init__(self, message: str, code: AppErrorCode):
+    def __init__(self, message: Optional[str], code: AppErrorCode):
         super().__init__(message)
         self.message = message
         self.code = code
 
 
-# class ForbiddenError(AppError):
-#     def __init__(self, message="Forbidden action"):
-#         super().__init__(message, code=403)
+class ForbiddenError(AppError):
+    def __init__(self, message: Optional[str] = None):
+        super().__init__(message, code=AppErrorCode.FORBIDDEN)
+
+
 class NotFoundError(AppError):
-    def __init__(self, message):
+    def __init__(self, message: Optional[str] = None):
         super().__init__(message, code=AppErrorCode.NOT_FOUND)
 
 
 class BadLogin(AppError):
-    def __init__(self, message):
+    def __init__(self, message: Optional[str] = None):
         super().__init__(message, code=AppErrorCode.BAD_LOGIN)
 
 
 class ConflictError(AppError):
-    def __init__(self, message):
+    def __init__(self, message: Optional[str] = None):
         super().__init__(message, code=AppErrorCode.CONFLICT)

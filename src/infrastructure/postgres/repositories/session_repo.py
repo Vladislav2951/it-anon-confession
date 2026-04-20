@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import delete, select
 from sqlalchemy.orm import joinedload, noload
@@ -10,6 +10,10 @@ from domain.entities import Session
 from domain.interfaces.database import ISessionRepo
 from infrastructure.postgres.models import SessionModel
 from infrastructure.postgres.repositories.base import BaseRepo
+
+
+if TYPE_CHECKING:
+    from pydantic import UUID7
 
 
 logger = logging.getLogger(__name__)
@@ -47,4 +51,8 @@ class SessionRepo(BaseRepo, ISessionRepo):
 
     async def delete(self, id: str):
         stmt = delete(SessionModel).where(SessionModel.token_hash == id)
+        _ = await self._session.execute(stmt)
+
+    async def delete_all_for_user(self, user_id: UUID7):
+        stmt = delete(SessionModel).where(SessionModel.user_id == user_id)
         _ = await self._session.execute(stmt)

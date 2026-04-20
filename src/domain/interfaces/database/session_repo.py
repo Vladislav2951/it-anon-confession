@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING, Optional
 
 
 if TYPE_CHECKING:
+    from pydantic import UUID7
+
     from domain.entities import Session
 
 
@@ -17,3 +19,6 @@ class ISessionRepo(ABC):
 
     @abstractmethod
     async def delete(self, id: str): ...
+
+    @abstractmethod
+    async def delete_all_for_user(self, user_id: UUID7): ...

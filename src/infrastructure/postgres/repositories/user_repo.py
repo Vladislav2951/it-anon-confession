@@ -1,16 +1,21 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 import logging
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import joinedload, noload
 
 from domain.dto import RegisterInput
 from domain.entities import User
 from domain.interfaces.database import IUserRepo
-from infrastructure.postgres.models import UserModel
+from infrastructure.postgres.models import RoleModel, UserModel
 from infrastructure.postgres.repositories.base import BaseRepo
+
+
+if TYPE_CHECKING:
+    from domain.interfaces.database.filters import UserFilter
 
 
 logger = logging.getLogger(__name__)
@@ -48,7 +53,6 @@ class UserRepo(BaseRepo, IUserRepo):
         result = await self._session.execute(stmt)
 
         user_model = result.scalar_one_or_none()
-
         if not user_model:
             return None
 
@@ -70,8 +74,41 @@ class UserRepo(BaseRepo, IUserRepo):
         logger.debug("Execute: %s", stmt)
 
         user_model = result.scalar_one_or_none()
-
         if not user_model:
             return None
 
         return User.model_validate(user_model)
+
+    async def get_all(
+        self, with_roles: bool = False, filter: Optional[UserFilter] = None
+    ) -> list[User]:
+        stmt = select(UserModel).where(UserModel.deleted_at.is_(None))
+
+        if filter and filter.roles:
+            stmt = stmt.join(UserModel.roles).where(RoleModel.name.in_(filter.roles))
+
+        if with_roles:
+            stmt = stmt.options(joinedload(UserModel.roles))
+        else:
+            stmt = stmt.options(noload(UserModel.roles))
+
+        result = await self._session.execute(stmt)
+
+        user_models = result.scalars().unique().all()
+        if not user_models:
+            return []
+
+        users: list[User] = []
+        for el in user_models:
+            users.append(User.model_validate(el))
+
+        return users
+
+    async def soft_delete(self, id: UUID7):
+        stmt = (
+            update(UserModel)
+            .where(UserModel.id == id, UserModel.deleted_at.is_(None))
+            .values(deleted_at=datetime.now(timezone.utc))
+        )
+
+        await self._session.execute(stmt)
