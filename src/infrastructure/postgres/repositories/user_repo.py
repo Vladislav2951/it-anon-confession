@@ -4,14 +4,14 @@ from datetime import datetime, timezone
 import logging
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import select, update
+from sqlalchemy import insert, select, update
 from sqlalchemy.orm import joinedload, noload
 
 from domain.dto import ChangePasswordUserInput, PatchUpdateUserInput, RegisterInput
 from domain.entities import User
 from domain.errors import UpdateError
 from domain.interfaces.database import IUserRepo
-from infrastructure.postgres.models import RoleModel, UserModel
+from infrastructure.postgres.models import RoleModel, UserModel, user_roles
 from infrastructure.postgres.repositories.base import BaseRepo
 
 
@@ -33,7 +33,7 @@ class UserRepo(BaseRepo, IUserRepo):
             nickname=register_inp.nickname,
             bio=register_inp.bio,
             password_hash=register_inp.password.get_secret_value(),
-            roles=[],  # Важно для lazy='raise'
+            roles=[],  # !
         )
 
         self._session.add(new_user)
@@ -42,38 +42,27 @@ class UserRepo(BaseRepo, IUserRepo):
 
         return User.model_validate(new_user)
 
-    async def get_one(self, id: UUID7, with_roles: bool = False) -> Optional[User]:
+    async def get_one(self, id: UUID7) -> Optional[User]:
         stmt = select(UserModel).where(UserModel.id == id, UserModel.deleted_at.is_(None))
 
-        if with_roles:
-            stmt = stmt.options(joinedload(UserModel.roles))
-        else:
-            stmt = stmt.options(noload(UserModel.roles))
-
         result = await self._session.execute(stmt)
+        logger.debug("Execute: %s", stmt)
 
-        user_model = result.scalar_one_or_none()
+        user_model = result.unique().scalar_one_or_none()
         if not user_model:
             return None
 
         return User.model_validate(user_model)
 
-    async def get_one_by_email(
-        self, email: EmailStr, with_roles: bool = False
-    ) -> Optional[User]:
+    async def get_one_by_email(self, email: EmailStr) -> Optional[User]:
         stmt = select(UserModel).where(
             UserModel.email == email, UserModel.deleted_at.is_(None)
         )
 
-        if with_roles:
-            stmt = stmt.options(joinedload(UserModel.roles))
-        else:
-            stmt = stmt.options(noload(UserModel.roles))
-
         result = await self._session.execute(stmt)
         logger.debug("Execute: %s", stmt)
 
-        user_model = result.scalar_one_or_none()
+        user_model = result.unique().scalar_one_or_none()
         if not user_model:
             return None
 
@@ -134,5 +123,10 @@ class UserRepo(BaseRepo, IUserRepo):
             .where(UserModel.id == id, UserModel.deleted_at.is_(None))
             .values(deleted_at=datetime.now(timezone.utc))
         )
+
+        await self._session.execute(stmt)
+
+    async def add_role(self, user_id: UUID7, role_id: UUID7):
+        stmt = insert(user_roles).values(user_id=user_id, role_id=role_id)
 
         await self._session.execute(stmt)

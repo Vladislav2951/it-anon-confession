@@ -68,7 +68,7 @@ class UserService:
 
         async with self._db_transaction_factory() as t:
             # Нельзя удалить администратора
-            if user := await t.user_repo.get_one(target_user_id, with_roles=True):
+            if user := await t.user_repo.get_one(target_user_id):
                 if user.has_role(SystemRole.admin.value):
                     raise ForbiddenError("Cannot delete administrator")
 

@@ -8,7 +8,8 @@ from pydantic import SecretStr
 from core.security import get_password_hash, verify_password
 from domain.dto import LoginInput, RegisterInput
 from domain.entities import User
-from domain.errors import BadLoginError, ConflictError
+from domain.enums import SystemRole
+from domain.errors import BadLoginError, ConflictError, NotFoundError
 
 
 logger = logging.getLogger(__name__)
@@ -44,7 +45,12 @@ class AuthService:
             register.password = SecretStr(
                 get_password_hash(register.password.get_secret_value())
             )
-
             user = await t.user_repo.create(register)
+
+            role = await t.role_repo.get_one_by_name(SystemRole.user.value)
+            if not role:
+                raise NotFoundError(f"Role '{SystemRole.user.value}' not found")
+
+            await t.user_repo.add_role(user.id, role.id)
 
             logger.info("User %s has been registered (email: %s)", user.id, user.email)
