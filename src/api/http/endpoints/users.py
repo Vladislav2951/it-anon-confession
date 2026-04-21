@@ -51,7 +51,7 @@ business_element_name = "users"
         status.HTTP_404_NOT_FOUND: {"model": ErrorResponse},
     },
 )
-async def get(
+async def get_one(
     identifier: EmailStr | UUID7,
     user_srv: UserService = Depends(user_srv),
     identity_ctx: IdentityContext = Depends(
@@ -77,7 +77,35 @@ async def get(
     except ForbiddenError:
         raise forbidden
     except Exception as e:
-        logger.exception("Error during self account delete: %s", str(e))
+        logger.exception("Error during getting user: %s", str(e))
+        raise internal_server_error
+
+
+@router.get(
+    "/",
+    summary="Get users",
+    response_model=DataResponse[UserPublic],
+    responses={status.HTTP_200_OK: {"description": "Success"}},
+)
+async def get_all(
+    user_srv: UserService = Depends(user_srv),
+    identity_ctx: IdentityContext = Depends(
+        IdentityContextFactory(business_element_name, Action.READ)
+    ),
+):
+    try:
+        users = await user_srv.get_all(identity_ctx)
+        users_response = [
+            UserPublic.model_validate(u, from_attributes=True).model_dump(mode="json")
+            for u in users
+        ]
+
+        return JSONResponse({"data": users_response})
+
+    except ForbiddenError:
+        raise forbidden
+    except Exception as e:
+        logger.exception("Error during getting users: %s", str(e))
         raise internal_server_error
 
 
@@ -182,11 +210,5 @@ async def change_password(
     except NotFoundError:
         raise not_found
     except Exception as e:
-        logger.exception("Error during user patch update: %s", str(e))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "code": AppErrorCode.INTERNAL_SERVER_ERROR,
-                "message": "An unexpected error occurred",
-            },
-        )
+        logger.exception("Error during user changing password: %s", str(e))
+        raise internal_server_error

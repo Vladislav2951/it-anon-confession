@@ -64,6 +64,16 @@ class UserService:
 
             return user
 
+    async def get_all(self, identity_ctx: IdentityContext) -> list[User]:
+        await self.access_srv.check_access(
+            identity_ctx.current_user,
+            identity_ctx.business_element_name,
+            identity_ctx.action,
+        )
+
+        async with self._db_transaction_factory() as t:
+            return await t.user_repo.get_all()
+
     async def update(
         self, id: UUID7, update_inp: PatchUpdateUserInput, identity_ctx: IdentityContext
     ) -> User:
