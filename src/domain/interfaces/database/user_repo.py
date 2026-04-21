@@ -26,9 +26,7 @@ class IUserRepo(ABC):
     async def get_one(self, id: UUID7) -> Optional[User]: ...
 
     @abstractmethod
-    async def get_all(
-        self, with_roles: bool = False, filter: Optional[UserFilter] = None
-    ) -> list[User]: ...
+    async def get_all(self, filter: Optional[UserFilter] = None) -> list[User]: ...
 
     @abstractmethod
     async def update(

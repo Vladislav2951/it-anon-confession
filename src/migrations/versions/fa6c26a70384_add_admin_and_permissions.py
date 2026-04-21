@@ -122,7 +122,7 @@ def upgrade() -> None:
     op.bulk_insert(
         permissions,
         [
-            # Права admin: Всё True, кроме удаления самого себя
+            # Права admin: Всё True
             {
                 "id": p_admin_users,
                 "business_element_id": be_users_id,
@@ -131,8 +131,8 @@ def upgrade() -> None:
                 "create_permission": True,
                 "update_permission": True,
                 "update_all_permission": True,
-                "delete_permission": False,
-                "delete_all_permission": True,  # Запрет на удаление "себя"
+                "delete_permission": True,
+                "delete_all_permission": True,
                 "description": "Admin: full access to users (except delete himself)",
             },
             {

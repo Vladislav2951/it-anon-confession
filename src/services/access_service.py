@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Optional
 
-from domain.enums import Action
-from domain.errors import ForbiddenError, UnauthorizedError
+from domain.enums import Action, SystemRole
+from domain.errors import ForbiddenError
+from domain.interfaces.database.filters import UserFilter
 from domain.interfaces.database.uow import IDatabaseTransactionFactory
 
 
@@ -80,6 +82,18 @@ class AccessService:
                 action=action,
                 resource_owner_id=resource_owner_id,
             ):
+                #  Нельзя удалить последнего администратора
+                if (
+                    action == Action.DELETE
+                    and resource_owner_id == user.id
+                    and any(r.name == SystemRole.admin.value for r in roles)
+                ):
+                    admins = await t.user_repo.get_all(
+                        UserFilter(roles=[SystemRole.admin.value])
+                    )
+                    if len(admins) == 1:
+                        raise ForbiddenError("System requires at least one admin")
+
                 return
 
             raise ForbiddenError("Access denied")

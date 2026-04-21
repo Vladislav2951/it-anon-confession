@@ -84,18 +84,11 @@ class UserRepo(BaseRepo, IUserRepo):
 
         return User.model_validate(user_model)
 
-    async def get_all(
-        self, with_roles: bool = False, filter: Optional[UserFilter] = None
-    ) -> list[User]:
+    async def get_all(self, filter: Optional[UserFilter] = None) -> list[User]:
         stmt = select(UserModel).where(UserModel.deleted_at.is_(None))
 
         if filter and filter.roles:
             stmt = stmt.join(UserModel.roles).where(RoleModel.name.in_(filter.roles))
-
-        if with_roles:
-            stmt = stmt.options(joinedload(UserModel.roles))
-        else:
-            stmt = stmt.options(noload(UserModel.roles))
 
         result = await self._session.execute(stmt)
 

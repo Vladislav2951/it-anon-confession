@@ -8,12 +8,7 @@ from fastapi.responses import JSONResponse
 from pydantic import UUID7
 
 from api.http.common_exceptions import internal_server_error
-from api.http.middleware import (
-    AccessRequired,
-    IdentityContextFactory,
-    auth_only,
-    get_current_user,
-)
+from api.http.middleware import IdentityContextFactory, auth_only
 from api.http.response_models import ErrorResponse, MessageResponse
 from core.config import get_settings
 from core.dependencies import user_srv
@@ -46,7 +41,6 @@ business_element_name = "admin"
 
 @router.delete(
     "/{user_id}",
-    dependencies=[Depends(AccessRequired(business_element_name, Action.READ))],
     summary="Delete account",
     response_model=MessageResponse,
     responses={status.HTTP_200_OK: {"description": "Success"}},
@@ -66,7 +60,10 @@ async def delete_user(
         return response
 
     except ForbiddenError:
-        logger.warning("Admin wants to remove his account")
+        logger.warning(
+            "An attempt by the last administrator (%s) to delete himself was detected",
+            user_id,
+        )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={

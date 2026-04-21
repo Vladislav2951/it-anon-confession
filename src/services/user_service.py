@@ -105,6 +105,7 @@ class UserService:
             )
 
     async def soft_delete(self, id: UUID7, identity_ctx: IdentityContext):
+        # Нельзя удалить администратора
         await self.access_srv.check_access(
             identity_ctx.current_user,
             identity_ctx.business_element_name,
@@ -113,7 +114,6 @@ class UserService:
         )
 
         async with self._db_transaction_factory() as t:
-            # Нельзя удалить администратора
             if await t.user_repo.get_one(id):
                 await t.user_repo.soft_delete(id)
                 await t.session_repo.delete_all_for_user(id)
