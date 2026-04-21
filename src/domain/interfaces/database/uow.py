@@ -15,37 +15,47 @@ if TYPE_CHECKING:
 
 class IDatabaseTransactionUoW(ABC):
     @abstractmethod
-    async def __aenter__(self) -> Self: ...
+    async def __aenter__(self) -> Self:
+        pass
 
     @abstractmethod
-    async def __aexit__(self, exp_type, exp_val, exp_tb): ...
+    async def __aexit__(self, exp_type, exp_val, exp_tb):
+        pass
 
     @abstractmethod
-    async def commit(self) -> None: ...
+    async def commit(self) -> None:
+        pass
 
     @abstractmethod
-    async def rollback(self) -> None: ...
+    async def rollback(self) -> None:
+        pass
 
     @abstractmethod
-    async def close(self) -> None: ...
-
-    @property
-    @abstractmethod
-    def user_repo(self) -> IUserRepo: ...
-
-    @property
-    @abstractmethod
-    def session_repo(self) -> ISessionRepo: ...
+    async def close(self) -> None:
+        pass
 
     @property
     @abstractmethod
-    def role_repo(self) -> IRoleRepo: ...
+    def user_repo(self) -> IUserRepo:
+        pass
 
     @property
     @abstractmethod
-    def permission_repo(self) -> IPermissionRepo: ...
+    def session_repo(self) -> ISessionRepo:
+        pass
+
+    @property
+    @abstractmethod
+    def role_repo(self) -> IRoleRepo:
+        pass
+
+    @property
+    @abstractmethod
+    def permission_repo(self) -> IPermissionRepo:
+        pass
 
 
 class IDatabaseTransactionFactory(ABC):
     @abstractmethod
-    def __call__(self) -> IDatabaseTransactionUoW: ...
+    def __call__(self) -> IDatabaseTransactionUoW:
+        pass

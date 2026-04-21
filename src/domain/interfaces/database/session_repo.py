@@ -12,13 +12,17 @@ if TYPE_CHECKING:
 
 class ISessionRepo(ABC):
     @abstractmethod
-    async def create(self, session: Session): ...
+    async def create(self, session: Session):
+        pass
 
     @abstractmethod
-    async def get_one(self, id: str, with_user: bool = False) -> Optional[Session]: ...
+    async def get_one(self, id: str, with_user: bool = False) -> Optional[Session]:
+        pass
 
     @abstractmethod
-    async def delete(self, id: str): ...
+    async def delete(self, id: str):
+        pass
 
     @abstractmethod
-    async def delete_all_for_user(self, user_id: UUID7): ...
+    async def delete_all_for_user(self, user_id: UUID7):
+        pass

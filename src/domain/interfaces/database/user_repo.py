@@ -14,30 +14,35 @@ if TYPE_CHECKING:
 
 class IUserRepo(ABC):
     @abstractmethod
-    async def create(self, user: User) -> User: ...
-
-    # @abstractmethod
-    # async def update(self, user: User): ...
+    async def create(self, user: User) -> User:
+        pass
 
     @abstractmethod
-    async def get_one_by_email(self, email: EmailStr) -> Optional[User]: ...
+    async def get_one_by_email(self, email: EmailStr) -> Optional[User]:
+        pass
 
     @abstractmethod
-    async def get_one(self, id: UUID7) -> Optional[User]: ...
+    async def get_one(self, id: UUID7) -> Optional[User]:
+        pass
 
     @abstractmethod
-    async def get_all(self, filter: Optional[UserFilter] = None) -> list[User]: ...
+    async def get_all(self, filter: Optional[UserFilter] = None) -> list[User]:
+        pass
 
     @abstractmethod
     async def update(
         self, id: UUID7, update_inp: ChangePasswordUserInput | PatchUpdateUserInput
-    ) -> User: ...
+    ) -> User:
+        pass
 
     @abstractmethod
-    async def soft_delete(self, id: UUID7): ...
+    async def soft_delete(self, id: UUID7):
+        pass
 
     @abstractmethod
-    async def assign_role(self, user_id: UUID7, role_id: UUID7): ...
+    async def assign_role(self, user_id: UUID7, role_id: UUID7):
+        pass
 
     @abstractmethod
-    async def get_permissions(self, user_id: UUID7) -> list[Permission]: ...
+    async def get_permissions(self, user_id: UUID7) -> list[Permission]:
+        pass

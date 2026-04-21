@@ -12,15 +12,15 @@ if TYPE_CHECKING:
 
 class IPermissionRepo(ABC):
     @abstractmethod
-    async def get_one(self, id: UUID7) -> Optional[Permission]: ...
-
-    # @abstractmethod
-    # async def get_one_by_name(self, name: str) -> Optional[Permission]: ...
+    async def get_one(self, id: UUID7) -> Optional[Permission]:
+        pass
 
     @abstractmethod
-    async def get_all(self) -> list[Permission]: ...
+    async def get_all(self) -> list[Permission]:
+        pass
 
     @abstractmethod
     async def get_permissions_for_element(
         self, user_id: UUID7, business_element_name: str
-    ) -> list[Permission]: ...
+    ) -> list[Permission]:
+        pass
