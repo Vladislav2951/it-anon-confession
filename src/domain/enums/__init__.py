@@ -1,5 +1,5 @@
-from .permissions import PermissionSlugs
+from .actions import Action
 from .system_roles import SystemRole
 
 
-__all__ = ["PermissionSlugs", "SystemRole"]
+__all__ = ["SystemRole", "Action"]

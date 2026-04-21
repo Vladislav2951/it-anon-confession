@@ -29,3 +29,6 @@ class IRoleRepo(ABC):
 
     @abstractmethod
     async def delete(self, id: UUID7): ...
+
+    @abstractmethod
+    async def get_user_roles(self, user_id: UUID7) -> list[Role]: ...

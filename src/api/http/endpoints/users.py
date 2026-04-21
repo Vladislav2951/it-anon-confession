@@ -2,20 +2,20 @@ from __future__ import annotations
 
 import logging
 from typing import TYPE_CHECKING
-import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import UUID7, EmailStr
 
+from api.http.common_exceptions import forbidden, internal_server_error, not_found
 from api.http.dto import ChangePasswordDTO, UpdateUserDTO
-from api.http.middleware import PermissionRequired, auth_only, get_current_user
+from api.http.middleware import IdentityContextFactory, auth_only, get_current_user
 from api.http.response_models import DataResponse, ErrorResponse, MessageResponse
 from core.config import get_settings
 from core.dependencies import user_srv
-from domain.dto import UserPublic
-from domain.enums import PermissionSlugs
-from domain.errors import AppErrorCode, BadLoginError, NotFoundError
+from domain.dto import IdentityContext, UserPublic
+from domain.enums import Action
+from domain.errors import AppErrorCode, BadLoginError, ForbiddenError, NotFoundError
 
 
 settings = get_settings()
@@ -28,34 +28,41 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/users", tags=["Users"], dependencies=[Depends(auth_only)])
-
-
-@router.get(
-    "/{identifier}",
-    dependencies=[
-        Depends(
-            PermissionRequired(
-                PermissionSlugs.users_view_self.value,
-                PermissionSlugs.users_view_any.value,
-            )
-        )
-    ],
-    summary="Get user by email or ID",
-    response_model=DataResponse[UserPublic],
+router = APIRouter(
+    prefix="/users",
+    tags=["Users"],
+    dependencies=[Depends(auth_only)],
     responses={
-        status.HTTP_200_OK: {"description": "Success"},
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponse},
         status.HTTP_403_FORBIDDEN: {"model": ErrorResponse},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": ErrorResponse},
     },
 )
-async def get(identifier: EmailStr | UUID7, user_srv: UserService = Depends(user_srv)):
+
+business_element_name = "users"
+
+
+@router.get(
+    "/{identifier}",
+    summary="Get user by email or ID",
+    response_model=DataResponse[UserPublic],
+    responses={
+        status.HTTP_200_OK: {"description": "Success"},
+        status.HTTP_404_NOT_FOUND: {"model": ErrorResponse},
+    },
+)
+async def get(
+    identifier: EmailStr | UUID7,
+    user_srv: UserService = Depends(user_srv),
+    identity_ctx: IdentityContext = Depends(
+        IdentityContextFactory(business_element_name, Action.READ)
+    ),
+):
     try:
         if isinstance(identifier, str):
-            user = await user_srv.get_one_by_email(identifier)
+            user = await user_srv.get_one_by_email(identifier, identity_ctx)
         else:
-            user = await user_srv.get_one(identifier)
+            user = await user_srv.get_one(identifier, identity_ctx)
 
         if user:
             return JSONResponse(
@@ -71,74 +78,59 @@ async def get(identifier: EmailStr | UUID7, user_srv: UserService = Depends(user
                 detail={"code": AppErrorCode.NOT_FOUND, "message": "User not found"},
             )
 
+    except ForbiddenError:
+        raise forbidden
     except Exception as e:
         logger.exception("Error during self account delete: %s", str(e))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "code": AppErrorCode.INTERNAL_SERVER_ERROR,
-                "message": "An unexpected error occurred",
-            },
-        )
+        raise internal_server_error
 
 
 @router.delete(
     "/me",
-    dependencies=[Depends(PermissionRequired(PermissionSlugs.users_delete_self.value))],
     summary="Delete self account",
     response_model=MessageResponse,
-    responses={
-        status.HTTP_200_OK: {"description": "Success"},
-        status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponse},
-        status.HTTP_403_FORBIDDEN: {"model": ErrorResponse},
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": ErrorResponse},
-    },
+    responses={status.HTTP_200_OK: {"description": "Success"}},
 )
 async def delete_self(
-    user: User = Depends(get_current_user), user_srv: UserService = Depends(user_srv)
+    user: User = Depends(get_current_user),
+    user_srv: UserService = Depends(user_srv),
+    identity_ctx: IdentityContext = Depends(
+        IdentityContextFactory(business_element_name, Action.DELETE)
+    ),
 ):
     try:
-        await user_srv.soft_delete(user.id, user)
+        await user_srv.soft_delete(user.id, identity_ctx)
 
         response = JSONResponse({"message": "Account has been deleted"})
         response.delete_cookie(key="session_id")
         return response
 
+    except ForbiddenError:
+        raise forbidden
     except Exception as e:
         logger.exception("Error during self account delete: %s", str(e))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "code": AppErrorCode.INTERNAL_SERVER_ERROR,
-                "message": "An unexpected error occurred",
-            },
-        )
+        raise internal_server_error
 
 
 @router.patch(
     "/{user_id}",
-    dependencies=[
-        Depends(
-            PermissionRequired(
-                PermissionSlugs.users_update_self.value,
-                PermissionSlugs.users_update_any.value,
-            )
-        )
-    ],
     summary="Update user",
     response_model=DataResponse[UserPublic],
     responses={
         status.HTTP_200_OK: {"description": "Success"},
-        status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponse},
-        status.HTTP_403_FORBIDDEN: {"model": ErrorResponse},
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": ErrorResponse},
+        status.HTTP_404_NOT_FOUND: {"model": ErrorResponse},
     },
 )
 async def update(
-    user_id: UUID7, update_data: UpdateUserDTO, user_srv: UserService = Depends(user_srv)
+    user_id: UUID7,
+    update_data: UpdateUserDTO,
+    user_srv: UserService = Depends(user_srv),
+    identity_ctx: IdentityContext = Depends(
+        IdentityContextFactory(business_element_name, Action.UPDATE)
+    ),
 ):
     try:
-        user = await user_srv.update(user_id, update_data)
+        user = await user_srv.update(user_id, update_data, identity_ctx)
         return JSONResponse(
             {
                 "data": UserPublic.model_validate(user, from_attributes=True).model_dump(
@@ -146,38 +138,37 @@ async def update(
                 )
             }
         )
+
+    except ForbiddenError:
+        raise forbidden
+    except NotFoundError:
+        raise not_found
     except Exception as e:
         logger.exception("Error during user patch update: %s", str(e))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "code": AppErrorCode.INTERNAL_SERVER_ERROR,
-                "message": "An unexpected error occurred",
-            },
-        )
+        raise internal_server_error
 
 
 @router.post(
     "/{user_id}/change-password",
-    dependencies=[Depends(PermissionRequired(PermissionSlugs.users_update_self.value))],
     summary="Update user",
     response_model=MessageResponse,
     responses={
         status.HTTP_204_NO_CONTENT: {"description": "Success"},
-        status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponse},
         status.HTTP_404_NOT_FOUND: {"model": ErrorResponse},
-        status.HTTP_403_FORBIDDEN: {"model": ErrorResponse},
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": ErrorResponse},
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ErrorResponse},
     },
 )
 async def change_password(
     user_id: UUID7,
     password_data: ChangePasswordDTO,
     user_srv: UserService = Depends(user_srv),
+    identity_ctx: IdentityContext = Depends(
+        IdentityContextFactory(business_element_name, Action.UPDATE)
+    ),
 ):
     try:
         await user_srv.change_password(
-            user_id, password_data.old_password, password_data.password
+            user_id, password_data.old_password, password_data.password, identity_ctx
         )
         return Response(status_code=status.HTTP_204_NO_CONTENT)
     except BadLoginError:
@@ -188,11 +179,11 @@ async def change_password(
                 "message": "Incorrect current password",
             },
         )
+
+    except ForbiddenError:
+        raise forbidden
     except NotFoundError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={"code": AppErrorCode.NOT_FOUND, "message": "User not found"},
-        )
+        raise not_found
     except Exception as e:
         logger.exception("Error during user patch update: %s", str(e))
         raise HTTPException(

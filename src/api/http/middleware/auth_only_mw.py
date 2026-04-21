@@ -3,11 +3,13 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from starlette.requests import Request
 
+from api.http.common_exceptions import unauthorized
 from core.dependencies import session_srv, user_srv
-from domain.errors import AppErrorCode
+from domain.dto import IdentityContext
+from domain.enums import Action
 
 
 if TYPE_CHECKING:
@@ -26,28 +28,23 @@ async def auth_only(
 
     session_id = request.cookies.get("session_id")
 
-    unauthorized_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail={
-            "code": AppErrorCode.UNAUTHORIZED,
-            "message": "Invalid or expired session",
-        },
-    )
-
     if not session_id:
-        raise unauthorized_exception
+        raise unauthorized
 
     session = await session_srv.get_one(session_id)
     if not session:
-        raise unauthorized_exception
+        raise unauthorized
 
     if session.is_expired():
         await session_srv.delete(session_id)
-        raise unauthorized_exception
+        raise unauthorized
 
-    user: User | None = await user_srv.get_one(session.user_id)
+    identity_ctx = IdentityContext(
+        current_user=None, business_element_name="__system__", action=Action.READ
+    )
+    user: User | None = await user_srv.get_one(session.user_id, identity_ctx)
     if not user:
-        raise unauthorized_exception
+        raise unauthorized
 
     request.state.user = user
     request.state.session = session

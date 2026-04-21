@@ -1,7 +1,16 @@
 from .auth_only_mw import auth_only
+from .check_access_mw import AccessRequired
 from .get_current_user_mw import get_current_user
 from .guest_only_mw import guest_only
+from .identity_context_factory import IdentityContextFactory
 from .permitted_only_mw import PermissionRequired
 
 
-__all__ = ["guest_only", "auth_only", "get_current_user", "PermissionRequired"]
+__all__ = [
+    "guest_only",
+    "auth_only",
+    "get_current_user",
+    "PermissionRequired",
+    "AccessRequired",
+    "IdentityContextFactory",
+]

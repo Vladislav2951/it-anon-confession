@@ -18,7 +18,7 @@ class RoleModel(Base):
     __tablename__ = "roles"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid7)
-    name: Mapped[str] = mapped_column(String(50), unique=True)
+    name: Mapped[str] = mapped_column(String(64), unique=True)
     is_system: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default=text("false")
     )

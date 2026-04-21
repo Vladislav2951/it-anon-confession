@@ -11,7 +11,7 @@ def sanitize_html(v: str) -> str:
 Sanitized = BeforeValidator(sanitize_html)
 
 NameStr = Annotated[
-    str, Sanitized, StringConstraints(min_length=1, max_length=50, strip_whitespace=True)
+    str, Sanitized, StringConstraints(min_length=1, max_length=64, strip_whitespace=True)
 ]
 TitleStr = Annotated[
     str, Sanitized, StringConstraints(min_length=3, max_length=70, strip_whitespace=True)

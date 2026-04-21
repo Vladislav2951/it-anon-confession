@@ -10,7 +10,7 @@ from domain.dto import RoleCreateInput, RoleUpdateInput
 from domain.entities import Role
 from domain.errors import UpdateError
 from domain.interfaces.database import IRoleRepo
-from infrastructure.postgres.models import RoleModel
+from infrastructure.postgres.models import RoleModel, user_roles
 from infrastructure.postgres.repositories.base import BaseRepo
 
 
@@ -86,3 +86,20 @@ class RoleRepo(BaseRepo, IRoleRepo):
     async def delete(self, id: UUID7):
         stmt = delete(RoleModel).where(RoleModel.id == id)
         await self._session.execute(stmt)
+
+    async def get_user_roles(self, user_id: UUID7) -> list[Role]:
+        stmt = (
+            select(RoleModel)
+            .join(user_roles, user_roles.c.role_id == RoleModel.id)
+            .where(user_roles.c.user_id == user_id)
+        )
+
+        result = await self._session.execute(stmt)
+        logger.debug("Execute: %s", stmt)
+
+        role_models = list(result.scalars().unique().all())
+
+        return [self._to_entity(m) for m in role_models]
+
+    def _to_entity(self, model: RoleModel) -> Role:
+        return Role(id=model.id, name=model.name, is_system=model.is_system)

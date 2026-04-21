@@ -24,10 +24,11 @@ class PermissionRequired:
         current_user: User = Depends(get_current_user),
         user_srv: UserService = Depends(user_srv),
     ):
-        permissions = await user_srv.get_permissions(current_user.id)
-        for perm in self.required_permissions:
-            if current_user.has_permission(perm):
-                return True
+        # permissions = await user_srv.get_permissions(current_user.id)
+
+        # for perm in self.required_permissions:
+        #     if current_user.has_permission(perm):
+        #         return True
 
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Permission denied"

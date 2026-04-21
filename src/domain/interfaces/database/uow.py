@@ -5,7 +5,12 @@ from typing import TYPE_CHECKING, Self
 
 
 if TYPE_CHECKING:
-    from domain.interfaces.database import IRoleRepo, ISessionRepo, IUserRepo
+    from domain.interfaces.database import (
+        IPermissionRepo,
+        IRoleRepo,
+        ISessionRepo,
+        IUserRepo,
+    )
 
 
 class IDatabaseTransactionUoW(ABC):
@@ -35,6 +40,10 @@ class IDatabaseTransactionUoW(ABC):
     @property
     @abstractmethod
     def role_repo(self) -> IRoleRepo: ...
+
+    @property
+    @abstractmethod
+    def permission_repo(self) -> IPermissionRepo: ...
 
 
 class IDatabaseTransactionFactory(ABC):

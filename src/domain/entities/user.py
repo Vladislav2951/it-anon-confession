@@ -36,10 +36,5 @@ class User(BaseEntity):
             bio=bio,
         )
 
-    # def add_role(self, role: Role) -> None:
-    #     if any(r.id == role.id for r in self.roles):
-    #         return
-    #     self.roles.append(role)
-
-    # def remove_role(self, role_id: UUID7) -> None:
-    #     self.roles = [r for r in self.roles if r.id != role_id]
+    def is_active(self) -> bool:
+        return self.deleted_at is None
