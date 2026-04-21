@@ -1,16 +1,31 @@
 from typing import Annotated
 
-from pydantic import SecretStr, StringConstraints
+import nh3
+from pydantic import BeforeValidator, SecretStr, StringConstraints
 
+
+def sanitize_html(v: str) -> str:
+    return nh3.clean(v, tags=set(), attributes={})
+
+
+Sanitized = BeforeValidator(sanitize_html)
 
 NameStr = Annotated[
-    str, StringConstraints(min_length=1, max_length=50, strip_whitespace=True)
+    str, Sanitized, StringConstraints(min_length=1, max_length=50, strip_whitespace=True)
+]
+TitleStr = Annotated[
+    str, Sanitized, StringConstraints(min_length=3, max_length=70, strip_whitespace=True)
 ]
 NicknameStr = Annotated[
-    str, StringConstraints(min_length=3, max_length=16, strip_whitespace=True)
+    str,
+    StringConstraints(
+        min_length=3, max_length=16, strip_whitespace=True, ascii_only=True
+    ),
 ]
 BioString = Annotated[
-    str, StringConstraints(min_length=3, max_length=1000, strip_whitespace=True)
+    str,
+    Sanitized,
+    StringConstraints(min_length=3, max_length=1000, strip_whitespace=True),
 ]
 PasswordStr = Annotated[SecretStr, StringConstraints(min_length=8, max_length=100)]
 PermissionSlug = Annotated[
