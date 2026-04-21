@@ -49,24 +49,6 @@ class PermissionRepo(BaseRepo, IPermissionRepo):
 
         return self._to_entity(role_model)
 
-    # async def get_rules_for_roles_and_element(
-    #     self, role_ids: list[int], element_name: str
-    # ) -> list[PermissionModel]:
-    #     stmt = (
-    #         select(PermissionModel)
-    #         .join(Role, Role.id == PermissionModel.role_id)
-    #         .join(BusinessElement, BusinessElement.id == PermissionModel.element_id)
-    #         .where(
-    #             PermissionModel.role_id.in_(role_ids),
-    #             BusinessElement.name == element_name,
-    #         )
-    #         .options(
-    #             joinedload(PermissionModel.role), joinedload(PermissionModel.element)
-    #         )
-    #     )
-    #     result = await self.session.execute(stmt)
-    #     return list(result.scalars().all())
-
     async def get_permissions_for_element(
         self, user_id: UUID7, business_element_name: str
     ) -> list[Permission]:

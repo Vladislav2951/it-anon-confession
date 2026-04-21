@@ -48,16 +48,6 @@ class UserRepo(BaseRepo, IUserRepo):
 
         return User.model_validate(user_model)
 
-    # async def update(self, user: User):
-    #     user_model = await self._session.get(UserModel, user.id)
-
-    #     if not user_model:
-    #         raise RuntimeError(f"User with id {user.id} not found")
-
-    #     self._update_model_from_entity(user_model, user)
-
-    #     await self._session.flush()
-
     async def get_one(self, id: UUID7) -> Optional[User]:
         stmt = select(UserModel).where(UserModel.id == id, UserModel.deleted_at.is_(None))
 
@@ -157,16 +147,16 @@ class UserRepo(BaseRepo, IUserRepo):
 
         return [Permission.model_validate(p) for p in permission_models]
 
-    def _update_model_from_entity(self, model: UserModel, entity: User):
-        data = self._get_model_data(entity)
-        for key, value in data.items():
-            setattr(model, key, value)
+    # def _update_model_from_entity(self, model: UserModel, entity: User):
+    #     data = self._get_model_data(entity)
+    #     for key, value in data.items():
+    #         setattr(model, key, value)
 
-    def _get_model_data(self, user: User) -> dict[str, Any]:
-        return {
-            "email": user.email,
-            "password_hash": user.password_hash.get_secret_value(),
-            "nickname": user.nickname,
-            "bio": user.bio,
-            "deleted_at": user.deleted_at,
-        }
+    # def _get_model_data(self, user: User) -> dict[str, Any]:
+    #     return {
+    #         "email": user.email,
+    #         "password_hash": user.password_hash.get_secret_value(),
+    #         "nickname": user.nickname,
+    #         "bio": user.bio,
+    #         "deleted_at": user.deleted_at,
+    #     }
