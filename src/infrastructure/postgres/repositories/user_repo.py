@@ -27,12 +27,14 @@ if TYPE_CHECKING:
 
 
 class UserRepo(BaseRepo, IUserRepo):
-    async def create(self, register_inp: RegisterInput) -> User:
+    async def create(self, user: User) -> User:
         new_user = UserModel(
-            email=register_inp.email,
-            nickname=register_inp.nickname,
-            bio=register_inp.bio,
-            password_hash=register_inp.password.get_secret_value(),
+            id=user.id,
+            email=user.email,
+            password_hash=user.password_hash.get_secret_value(),
+            nickname=user.nickname,
+            bio=user.bio,
+            deleted_at=user.deleted_at,
             roles=[],  # !
         )
 

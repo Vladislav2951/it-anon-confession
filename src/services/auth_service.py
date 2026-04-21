@@ -37,15 +37,22 @@ class AuthService:
 
             return user
 
-    async def register(self, register: RegisterInput):
+    async def register(self, register_inp: RegisterInput):
         async with self._db_transaction_factory() as t:
-            if user := await t.user_repo.get_one_by_email(register.email):
+            if user := await t.user_repo.get_one_by_email(register_inp.email):
                 raise ConflictError(f"User {user.email} is already registered")
 
-            register.password = SecretStr(
-                get_password_hash(register.password.get_secret_value())
+            register_inp.password = SecretStr(
+                get_password_hash(register_inp.password.get_secret_value())
             )
-            user = await t.user_repo.create(register)
+            user = User.register(
+                register_inp.email,
+                register_inp.password,
+                register_inp.nickname,
+                register_inp.bio,
+            )
+
+            user = await t.user_repo.create(user)
 
             role = await t.role_repo.get_one_by_name(SystemRole.user.value)
             if not role:

@@ -12,6 +12,6 @@ class LoginInput(BaseModel):
 
 class RegisterInput(BaseModel):
     email: EmailStr
+    password: PasswordStr
     nickname: NicknameStr
     bio: Optional[BioString]
-    password: PasswordStr

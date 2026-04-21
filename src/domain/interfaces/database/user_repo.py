@@ -7,14 +7,14 @@ from typing import TYPE_CHECKING, Optional
 if TYPE_CHECKING:
     from pydantic import UUID7, EmailStr
 
-    from domain.dto import ChangePasswordUserInput, PatchUpdateUserInput, RegisterInput
+    from domain.dto import ChangePasswordUserInput, PatchUpdateUserInput
     from domain.entities import User
     from domain.interfaces.database.filters import UserFilter
 
 
 class IUserRepo(ABC):
     @abstractmethod
-    async def create(self, create_inp: RegisterInput) -> User: ...
+    async def create(self, user: User) -> User: ...
 
     @abstractmethod
     async def get_one_by_email(self, email: EmailStr) -> Optional[User]: ...
