@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from pydantic import SecretStr
 
@@ -31,7 +31,7 @@ class UserService:
         self._db_transaction_factory = db_transaction_factory
         self.access_srv = access_srv
 
-    async def get_one(self, id: UUID7, identity_ctx: IdentityContext) -> Optional[User]:
+    async def get_one(self, id: UUID7, identity_ctx: IdentityContext) -> User:
         await self.access_srv.check_access(
             identity_ctx.current_user,
             identity_ctx.business_element_name,
@@ -40,11 +40,15 @@ class UserService:
         )
 
         async with self._db_transaction_factory() as t:
-            return await t.user_repo.get_one(id)
+            user = await t.user_repo.get_one(id)
+            if not user:
+                raise NotFoundError(f"User {id} not found")
+
+            return user
 
     async def get_one_by_email(
         self, email: EmailStr, identity_ctx: IdentityContext
-    ) -> Optional[User]:
+    ) -> User:
         async with self._db_transaction_factory() as t:
             user = await t.user_repo.get_one_by_email(email)
 
@@ -54,6 +58,9 @@ class UserService:
                 identity_ctx.action,
                 user.id if user else None,
             )
+
+            if not user:
+                raise NotFoundError(f"User {email} not found")
 
             return user
 
@@ -104,8 +111,8 @@ class UserService:
                 id, ChangePasswordUserInput(password_hash=new_password_hash)
             )
 
-    async def soft_delete(self, id: UUID7, identity_ctx: IdentityContext):
-        # Нельзя удалить администратора
+    async def soft_delete(self, id: UUID7, identity_ctx: IdentityContext) -> None:
+        # Нельзя удалить последнего администратора
         await self.access_srv.check_access(
             identity_ctx.current_user,
             identity_ctx.business_element_name,
@@ -119,4 +126,4 @@ class UserService:
                 await t.session_repo.delete_all_for_user(id)
 
             # Уже удалён
-            return
+            return None

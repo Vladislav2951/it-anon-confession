@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import UUID7
 
@@ -33,6 +33,7 @@ router = APIRouter(
     responses={
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponse},
         status.HTTP_403_FORBIDDEN: {"model": ErrorResponse},
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {"description": "Validation error"},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": ErrorResponse},
     },
 )
@@ -43,9 +44,9 @@ business_element_name = "admin"
     "/{user_id}",
     summary="Delete account",
     response_model=MessageResponse,
-    responses={status.HTTP_200_OK: {"description": "Success"}},
+    responses={status.HTTP_204_NO_CONTENT: {"description": "Success"}},
 )
-async def delete_user(
+async def delete(
     user_id: UUID7,
     user_srv: UserService = Depends(user_srv),
     identity_ctx: IdentityContext = Depends(
@@ -55,7 +56,7 @@ async def delete_user(
     try:
         await user_srv.soft_delete(user_id, identity_ctx)
 
-        response = JSONResponse({"message": "Account has been deleted"})
+        response = Response(status_code=status.HTTP_204_NO_CONTENT)
         response.delete_cookie(key="session_id")
         return response
 
@@ -73,5 +74,5 @@ async def delete_user(
         )
 
     except Exception as e:
-        logger.exception("Error during account delete: %s", str(e))
+        logger.exception("Error during deleting account: %s", str(e))
         raise internal_server_error

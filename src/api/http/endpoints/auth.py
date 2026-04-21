@@ -26,7 +26,16 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/auth", tags=["Auth"])
+router = APIRouter(
+    prefix="/auth",
+    tags=["Auth"],
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponse},
+        status.HTTP_403_FORBIDDEN: {"model": ErrorResponse},
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {"description": "Validation error"},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": ErrorResponse},
+    },
+)
 
 secure = False
 samesite: Literal["lax", "strict", "none"] | None = "lax"
@@ -40,19 +49,7 @@ if settings.ENV == "prod":
     dependencies=[Depends(guest_only)],
     summary="Login",
     response_model=MessageResponse,
-    responses={
-        status.HTTP_200_OK: {"description": "Success"},
-        status.HTTP_401_UNAUTHORIZED: {
-            "description": "Unauthorized",
-            "model": ErrorResponse,
-        },
-        status.HTTP_403_FORBIDDEN: {"description": "Forbidden", "model": ErrorResponse},
-        status.HTTP_422_UNPROCESSABLE_CONTENT: {"description": "Validation error"},
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {
-            "description": "Something went wrong",
-            "model": ErrorResponse,
-        },
-    },
+    responses={status.HTTP_200_OK: {"description": "Success"}},
 )
 async def login(
     request: Request,
@@ -113,12 +110,7 @@ async def login(
     dependencies=[Depends(auth_only)],
     summary="Logout",
     response_model=MessageResponse,
-    responses={
-        status.HTTP_200_OK: {"description": "Success"},
-        status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponse},
-        status.HTTP_403_FORBIDDEN: {"model": ErrorResponse},
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": ErrorResponse},
-    },
+    responses={status.HTTP_200_OK: {"description": "Success"}},
 )
 async def logout(request: Request, session_srv: SessionService = Depends(session_srv)):
     session_id = request.cookies.get("session_id")
@@ -157,22 +149,8 @@ async def logout(request: Request, session_srv: SessionService = Depends(session
     response_model=MessageResponse,
     responses={
         status.HTTP_201_CREATED: {"description": "User has been registered"},
-        status.HTTP_401_UNAUTHORIZED: {
-            "description": "Unauthorized",
-            "model": ErrorResponse,
-        },
-        status.HTTP_400_BAD_REQUEST: {
-            "description": "Incorrect data entered",
-            "model": ErrorResponse,
-        },
         status.HTTP_409_CONFLICT: {
             "description": "User is already exist",
-            "model": ErrorResponse,
-        },
-        #! fix response model
-        status.HTTP_422_UNPROCESSABLE_CONTENT: {"description": "Validation error"},
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {
-            "description": "Something went wrong",
             "model": ErrorResponse,
         },
     },

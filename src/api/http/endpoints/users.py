@@ -64,20 +64,16 @@ async def get(
         else:
             user = await user_srv.get_one(identifier, identity_ctx)
 
-        if user:
-            return JSONResponse(
-                {
-                    "data": UserPublic.model_validate(
-                        user, from_attributes=True
-                    ).model_dump(mode="json")
-                }
-            )
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail={"code": AppErrorCode.NOT_FOUND, "message": "User not found"},
-            )
+        return JSONResponse(
+            {
+                "data": UserPublic.model_validate(user, from_attributes=True).model_dump(
+                    mode="json"
+                )
+            }
+        )
 
+    except NotFoundError:
+        raise not_found
     except ForbiddenError:
         raise forbidden
     except Exception as e:
@@ -155,7 +151,7 @@ async def update(
     responses={
         status.HTTP_204_NO_CONTENT: {"description": "Success"},
         status.HTTP_404_NOT_FOUND: {"model": ErrorResponse},
-        status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ErrorResponse},
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {"description": "Validation error"},
     },
 )
 async def change_password(
@@ -171,6 +167,7 @@ async def change_password(
             user_id, password_data.old_password, password_data.password, identity_ctx
         )
         return Response(status_code=status.HTTP_204_NO_CONTENT)
+
     except BadLoginError:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
