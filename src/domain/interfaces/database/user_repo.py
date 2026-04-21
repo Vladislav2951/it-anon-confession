@@ -8,13 +8,16 @@ if TYPE_CHECKING:
     from pydantic import UUID7, EmailStr
 
     from domain.dto import ChangePasswordUserInput, PatchUpdateUserInput
-    from domain.entities import User
+    from domain.entities import Permission, User
     from domain.interfaces.database.filters import UserFilter
 
 
 class IUserRepo(ABC):
     @abstractmethod
     async def create(self, user: User) -> User: ...
+
+    # @abstractmethod
+    # async def update(self, user: User): ...
 
     @abstractmethod
     async def get_one_by_email(self, email: EmailStr) -> Optional[User]: ...
@@ -36,4 +39,7 @@ class IUserRepo(ABC):
     async def soft_delete(self, id: UUID7): ...
 
     @abstractmethod
-    async def add_role(self, user_id: UUID7, role_id: UUID7): ...
+    async def assign_role(self, user_id: UUID7, role_id: UUID7): ...
+
+    @abstractmethod
+    async def get_permissions(self, user_id: UUID7) -> list[Permission]: ...

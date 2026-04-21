@@ -2,16 +2,22 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import logging
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from sqlalchemy import insert, select, update
 from sqlalchemy.orm import joinedload, noload
 
-from domain.dto import ChangePasswordUserInput, PatchUpdateUserInput, RegisterInput
-from domain.entities import User
+from domain.dto import ChangePasswordUserInput, PatchUpdateUserInput
+from domain.entities import Permission, User
 from domain.errors import UpdateError
 from domain.interfaces.database import IUserRepo
-from infrastructure.postgres.models import RoleModel, UserModel, user_roles
+from infrastructure.postgres.models import (
+    PermissionModel,
+    RoleModel,
+    UserModel,
+    role_permissions,
+    user_roles,
+)
 from infrastructure.postgres.repositories.base import BaseRepo
 
 
@@ -28,21 +34,29 @@ if TYPE_CHECKING:
 
 class UserRepo(BaseRepo, IUserRepo):
     async def create(self, user: User) -> User:
-        new_user = UserModel(
+        user_model = UserModel(
             id=user.id,
             email=user.email,
             password_hash=user.password_hash.get_secret_value(),
             nickname=user.nickname,
             bio=user.bio,
-            deleted_at=user.deleted_at,
-            roles=[],  # !
         )
 
-        self._session.add(new_user)
+        self._session.add(user_model)
 
         await self._session.flush()
 
-        return User.model_validate(new_user)
+        return User.model_validate(user_model)
+
+    # async def update(self, user: User):
+    #     user_model = await self._session.get(UserModel, user.id)
+
+    #     if not user_model:
+    #         raise RuntimeError(f"User with id {user.id} not found")
+
+    #     self._update_model_from_entity(user_model, user)
+
+    #     await self._session.flush()
 
     async def get_one(self, id: UUID7) -> Optional[User]:
         stmt = select(UserModel).where(UserModel.id == id, UserModel.deleted_at.is_(None))
@@ -115,6 +129,7 @@ class UserRepo(BaseRepo, IUserRepo):
         )
 
         result = await self._session.execute(stmt)
+        logger.debug("Execute: %s", stmt)
         user = result.scalar_one()
 
         return User.model_validate(user)
@@ -128,7 +143,37 @@ class UserRepo(BaseRepo, IUserRepo):
 
         await self._session.execute(stmt)
 
-    async def add_role(self, user_id: UUID7, role_id: UUID7):
+    async def assign_role(self, user_id: UUID7, role_id: UUID7):
         stmt = insert(user_roles).values(user_id=user_id, role_id=role_id)
-
         await self._session.execute(stmt)
+
+    async def get_permissions(self, user_id: UUID7) -> list[Permission]:
+        stmt = (
+            select(PermissionModel)
+            .join(
+                role_permissions, PermissionModel.id == role_permissions.c.permission_id
+            )
+            .join(user_roles, role_permissions.c.role_id == user_roles.c.role_id)
+            .where(user_roles.c.user_id == user_id)
+            .distinct()
+        )
+
+        result = await self._session.execute(stmt)
+        logger.debug("Execute: %s", stmt)
+        permission_models = result.scalars().all()
+
+        return [Permission.model_validate(p) for p in permission_models]
+
+    def _update_model_from_entity(self, model: UserModel, entity: User):
+        data = self._get_model_data(entity)
+        for key, value in data.items():
+            setattr(model, key, value)
+
+    def _get_model_data(self, user: User) -> dict[str, Any]:
+        return {
+            "email": user.email,
+            "password_hash": user.password_hash.get_secret_value(),
+            "nickname": user.nickname,
+            "bio": user.bio,
+            "deleted_at": user.deleted_at,
+        }

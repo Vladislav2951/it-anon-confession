@@ -16,11 +16,11 @@ if TYPE_CHECKING:
 class Role(BaseEntity):
     name: NameStr
 
-    permissions: list[Permission] = []
+    # permissions: list[Permission] = []
     is_system: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
     @classmethod
-    def create(cls, name: NameStr, permissions: list[Permission] = []) -> Self:
-        return cls(id=uuid7(), name=name, permissions=permissions)
+    def create(cls, name: NameStr) -> Self:
+        return cls(id=uuid7(), name=name)

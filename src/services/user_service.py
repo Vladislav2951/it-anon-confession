@@ -16,6 +16,7 @@ from domain.validators import PasswordStr
 if TYPE_CHECKING:
     from pydantic import UUID7, EmailStr
 
+    from domain.entities import Permission
     from domain.interfaces.database.uow import IDatabaseTransactionFactory
 
 logger = logging.getLogger(__name__)
@@ -77,3 +78,31 @@ class UserService:
 
             # Уже удалён
             return
+
+    async def get_permissions(self, user_id: UUID7) -> list[Permission]:
+        async with self._db_transaction_factory() as t:
+            return await t.user_repo.get_permissions(user_id)
+
+
+class UserPolicy:
+    @classmethod
+    def can_view(cls, actor: User, target_id: UUID7) -> bool:
+        return cls._can(actor, target_id, PermissionSlugs.users_view_self)
+
+    @classmethod
+    def can_view_by_email(cls, actor: User, target_email: EmailStr) -> bool:
+        if actor.has_permission(PermissionSlugs.users_view_any.value):
+            return True
+        if actor.email == target_email and actor.has_permission(
+            PermissionSlugs.users_view_self.value
+        ):
+            return True
+        return False
+
+    @classmethod
+    def _can(cls, actor: User, target_id: UUID7, slug: PermissionSlugs) -> bool:
+        if actor.has_permission(PermissionSlugs.users_view_any.value):
+            return True
+        if actor.id == target_id and actor.has_permission(slug.value):
+            return True
+        return False

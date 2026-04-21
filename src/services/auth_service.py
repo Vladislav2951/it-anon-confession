@@ -42,22 +42,19 @@ class AuthService:
             if user := await t.user_repo.get_one_by_email(register_inp.email):
                 raise ConflictError(f"User {user.email} is already registered")
 
-            register_inp.password = SecretStr(
-                get_password_hash(register_inp.password.get_secret_value())
-            )
-            user = User.register(
+            role = await t.role_repo.get_one_by_name(SystemRole.user.value)
+            if not role:
+                raise NotFoundError(f"Role '{SystemRole.user.value}' not found")
+
+            user = User.create(
                 register_inp.email,
                 register_inp.password,
                 register_inp.nickname,
                 register_inp.bio,
             )
 
-            user = await t.user_repo.create(user)
+            _ = await t.user_repo.create(user)
 
-            role = await t.role_repo.get_one_by_name(SystemRole.user.value)
-            if not role:
-                raise NotFoundError(f"Role '{SystemRole.user.value}' not found")
-
-            await t.user_repo.add_role(user.id, role.id)
+            await t.user_repo.assign_role(user.id, role.id)
 
             logger.info("User %s has been registered (email: %s)", user.id, user.email)
