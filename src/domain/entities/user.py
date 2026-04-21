@@ -14,7 +14,7 @@ class User(BaseEntity):
     password_hash: SecretStr
     deleted_at: Optional[datetime] = None
 
-    roles: Optional[list[Role]] = None
+    roles: list[Role] = []
 
     model_config = ConfigDict(from_attributes=True)
 
