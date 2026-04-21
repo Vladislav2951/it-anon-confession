@@ -22,10 +22,16 @@ NicknameStr = Annotated[
         min_length=3, max_length=16, strip_whitespace=True, ascii_only=True
     ),
 ]
+DescriptionStr = Annotated[str, StringConstraints(min_length=3, max_length=250)]
 BioString = Annotated[
     str,
     Sanitized,
     StringConstraints(min_length=3, max_length=1000, strip_whitespace=True),
+]
+BodyString = Annotated[
+    str,
+    Sanitized,
+    StringConstraints(min_length=3, max_length=2000, strip_whitespace=True),
 ]
 PasswordStr = Annotated[SecretStr, StringConstraints(min_length=8, max_length=100)]
 PermissionSlug = Annotated[

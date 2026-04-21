@@ -1,20 +1,28 @@
+from __future__ import annotations
+
 from datetime import datetime
-from typing import Optional
+from typing import TYPE_CHECKING, Optional, Self
 
-from pydantic import ConfigDict, EmailStr, SecretStr
+from pydantic import ConfigDict, EmailStr, Field, SecretStr
+from uuid_extensions import uuid7  # type: ignore[import-untyped]
 
-from domain.entities import BaseEntity, Role
-from domain.validators import BioString, NameStr, NicknameStr, PermissionSlug
+from core.security import get_password_hash
+from domain.entities import BaseEntity
+from domain.validators import BioString, NameStr, NicknameStr, PasswordStr, PermissionSlug
+
+
+if TYPE_CHECKING:
+    from domain.entities import Role
 
 
 class User(BaseEntity):
     email: EmailStr
+    password_hash: SecretStr
     nickname: NicknameStr
     bio: Optional[BioString]
-    password_hash: SecretStr
     deleted_at: Optional[datetime] = None
 
-    roles: list[Role] = []
+    roles: list[Role] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -26,4 +34,22 @@ class User(BaseEntity):
             perm.slug == permission
             for role in (self.roles or [])
             for perm in (role.permissions)
+        )
+
+    @classmethod
+    def register(
+        cls,
+        email: EmailStr,
+        password: PasswordStr,
+        nickname: NicknameStr,
+        bio: Optional[BioString],
+        roles: list[Role] = [],
+    ) -> Self:
+        return cls(
+            id=uuid7(),
+            email=email,
+            password_hash=SecretStr(get_password_hash(password.get_secret_value())),
+            nickname=nickname,
+            bio=bio,
+            roles=roles,
         )

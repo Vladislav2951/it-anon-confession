@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from typing import TYPE_CHECKING, Optional
+from typing import Self
 
 from pydantic import UUID7, BaseModel, ConfigDict, Field
 
@@ -30,7 +30,7 @@ class Session(BaseModel):
         expires_in_seconds: int,
         user_agent: str | None = None,
         ip_address: str | None = None,
-    ) -> Session:
+    ) -> Self:
         now = datetime.now(timezone.utc)
         return cls(
             token_hash=get_token_hash(token),
