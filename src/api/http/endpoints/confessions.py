@@ -38,7 +38,7 @@ router = APIRouter(
     },
 )
 
-business_element_name = "confession"
+business_element_name = "confessions"
 
 
 @router.post(
