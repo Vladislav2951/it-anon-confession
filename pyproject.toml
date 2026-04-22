@@ -19,10 +19,12 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "aiosqlite>=0.22.1",
     "black>=25.1.0,<26",
     "isort>=6.0.1,<7",
     "mypy>=1.16.1,<2",
     "pytest>=9.0.3",
+    "pytest-asyncio>=1.3.0",
     "pytest-cov>=7.1.0",
     "types-colorama>=0.4.15.20260408",
 ]
@@ -63,8 +65,24 @@ no_implicit_reexport = true
 explicit_package_bases = true
 
 [tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
 addopts = "--cov=src --cov-report=term-missing"
 pythonpath = ". src"
+
+[tool.pytest_env]
+ENV = "test"
+HOST = "localhost"
+PORT = 8000
+SESSION_DURATION_DAYS = 30
+LOG_LEVEL = "DEBUG"
+CORS_ORIGINS=["http://localhost:3000","http://127.0.0.1:3000","https://my-frontend-app.com"]
+# postgres
+DB_HOST = "localhost"
+DB_PORT = 5432
+DB_NAME = "postgres"
+DB_USERNAME = "postgres"
+DB_PASSWORD = "postgres"
 
 [tool.coverage.run]
 omit = ["tests/*"]

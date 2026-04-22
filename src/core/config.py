@@ -30,7 +30,7 @@ def _get_version_from_pyproject():
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    ENV: Literal["dev", "prod"] = "prod"
+    ENV: Literal["dev", "prod", "test"] = "prod"
     VERSION: str = _get_version_from_pyproject()
 
     HOST: Union[IPvAnyAddress, Literal["localhost"]] = IPv4Address("0.0.0.0")

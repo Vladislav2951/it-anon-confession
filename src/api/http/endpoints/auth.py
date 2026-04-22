@@ -37,11 +37,14 @@ router = APIRouter(
     },
 )
 
-secure = False
+httponly = True
+secure = True
 samesite: Literal["lax", "strict", "none"] | None = "lax"
-if settings.ENV == "prod":
-    secure = True
-    samesite = "lax"
+if settings.ENV == "dev":
+    secure = False
+if settings.ENV == "test":
+    secure = False
+    httponly = False
 
 
 @router.post(
@@ -83,7 +86,7 @@ async def login(
         response.set_cookie(
             key="session_id",
             value=token,
-            httponly=True,
+            httponly=httponly,
             secure=secure,
             samesite=samesite,
             max_age=expires_in_seconds,
