@@ -3,6 +3,7 @@ from services import (
     AccessService,
     AuthService,
     ConfessionService,
+    PermissionService,
     RoleService,
     SessionService,
     UserService,
@@ -15,7 +16,9 @@ _auth_service = AuthService(_database_uow_factory)
 _session_service = SessionService(_database_uow_factory)
 
 _access_service = AccessService(_database_uow_factory)
+
 _role_service = RoleService(_database_uow_factory, _access_service)
+_permission_service = PermissionService(_database_uow_factory, _access_service)
 _user_service = UserService(_database_uow_factory, _access_service)
 _confession_service = ConfessionService(_database_uow_factory, _access_service)
 
@@ -42,3 +45,7 @@ def role_srv() -> RoleService:
 
 def confession_srv() -> ConfessionService:
     return _confession_service
+
+
+def permission_srv() -> PermissionService:
+    return _permission_service

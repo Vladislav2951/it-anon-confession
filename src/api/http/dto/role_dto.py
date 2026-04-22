@@ -1,4 +1,4 @@
-from domain.dto import AssignPermissionInput, RoleCreateInput, RoleUpdateInput
+from domain.dto import RoleCreateInput, RoleUpdateInput
 
 
 class RoleCreateDTO(RoleCreateInput):
@@ -6,8 +6,4 @@ class RoleCreateDTO(RoleCreateInput):
 
 
 class RoleUpdateDTO(RoleUpdateInput):
-    pass
-
-
-class AssignPermissionDTO(AssignPermissionInput):
     pass

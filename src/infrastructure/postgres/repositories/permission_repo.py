@@ -4,7 +4,6 @@ import logging
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import select
-from sqlalchemy.orm import joinedload
 
 from domain.entities import Permission
 from domain.interfaces.database import IPermissionRepo
@@ -25,13 +24,10 @@ if TYPE_CHECKING:
 
 class PermissionRepo(BaseRepo, IPermissionRepo):
     async def get_all(self) -> list[Permission]:
-        stmt = select(PermissionModel).options(
-            joinedload(PermissionModel.roles),
-            joinedload(PermissionModel.business_element),
-        )
+        stmt = select(PermissionModel)
         result = await self._session.execute(stmt)
         logger.debug("Execute: %s", stmt)
-        permission_models = result.scalars().all()
+        permission_models = result.scalars().unique().all()
 
         return [self._to_entity(m) for m in permission_models]
 

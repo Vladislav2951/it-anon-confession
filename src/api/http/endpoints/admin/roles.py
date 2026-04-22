@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import UUID7
 
@@ -13,12 +13,12 @@ from api.http.common_exceptions import (
     internal_server_error,
     not_found,
 )
-from api.http.dto import AssignPermissionDTO, RoleCreateDTO, RoleUpdateDTO
+from api.http.dto import RoleCreateDTO, RoleUpdateDTO
 from api.http.middleware import IdentityContextFactory, auth_only
 from api.http.response_models import DataResponse, ErrorResponse, MessageResponse
 from core.config import get_settings
 from core.dependencies import role_srv
-from domain.entities.role import Role
+from domain.entities import Role
 from domain.enums import Action
 from domain.errors import ConflictError, ForbiddenError, NotFoundError
 
@@ -180,21 +180,21 @@ async def delete(
 
 
 @router.post(
-    "/{role_id}",
+    "/{role_id}/assign-permission/{permission_id}",
     summary="Assign permission",
     response_model=MessageResponse,
     responses={status.HTTP_204_NO_CONTENT: {"description": "Success"}},
 )
 async def assign_permission(
     role_id: UUID7,
-    data: AssignPermissionDTO,
+    permission_id: UUID7,
     role_srv: RoleService = Depends(role_srv),
     identity_ctx: IdentityContext = Depends(
         IdentityContextFactory(business_element_name, Action.UPDATE)
     ),
 ):
     try:
-        await role_srv.assign_permission(role_id, data.permission_id, identity_ctx)
+        await role_srv.assign_permission(role_id, permission_id, identity_ctx)
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
     except NotFoundError as e:
@@ -209,21 +209,21 @@ async def assign_permission(
 
 
 @router.post(
-    "/{role_id}",
+    "/{role_id}/revoke-permission/{permission_id}",
     summary="Revoke permission",
     response_model=MessageResponse,
     responses={status.HTTP_204_NO_CONTENT: {"description": "Success"}},
 )
 async def revoke_permission(
     role_id: UUID7,
-    data: AssignPermissionDTO,
+    permission_id: UUID7,
     role_srv: RoleService = Depends(role_srv),
     identity_ctx: IdentityContext = Depends(
         IdentityContextFactory(business_element_name, Action.UPDATE)
     ),
 ):
     try:
-        await role_srv.revoke_permission(role_id, data.permission_id, identity_ctx)
+        await role_srv.revoke_permission(role_id, permission_id, identity_ctx)
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
     except NotFoundError as e:
