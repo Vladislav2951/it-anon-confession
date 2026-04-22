@@ -1,15 +1,8 @@
 from typing import Optional
 
-from pydantic import UUID7, BaseModel, EmailStr, Field, SecretStr
+from pydantic import BaseModel, EmailStr, Field, SecretStr
 
 from domain.validators import BioString, NicknameStr
-
-
-class UserPublic(BaseModel):
-    id: UUID7
-    email: EmailStr
-    nickname: NicknameStr
-    bio: Optional[BioString]
 
 
 class PatchUpdateUserInput(BaseModel):

@@ -1,7 +1,7 @@
 from .auth_dto import LoginDTO, RegisterDTO
-from .confession_dto import ConfessionCreateDTO, ConfessionUpdateDTO
+from .confession_dto import ConfessionCreateDTO, ConfessionPublic, ConfessionUpdateDTO
 from .role_dto import AssignPermissionDTO, RoleCreateDTO, RoleUpdateDTO
-from .user_dto import ChangePasswordDTO, UpdateUserDTO
+from .user_dto import ChangePasswordDTO, UpdateUserDTO, UserPublic
 
 
 __all__ = [
@@ -14,4 +14,6 @@ __all__ = [
     "AssignPermissionDTO",
     "ConfessionCreateDTO",
     "ConfessionUpdateDTO",
+    "UserPublic",
+    "ConfessionPublic",
 ]

@@ -1,7 +1,16 @@
-from pydantic import BaseModel, SecretStr, model_validator
+from typing import Optional
+
+from pydantic import UUID7, BaseModel, EmailStr, SecretStr, model_validator
 
 from domain.dto import PatchUpdateUserInput
-from domain.validators import PasswordStr
+from domain.validators import BioString, NicknameStr, PasswordStr
+
+
+class UserPublic(BaseModel):
+    id: UUID7
+    email: EmailStr
+    nickname: NicknameStr
+    bio: Optional[BioString]
 
 
 class ChangePasswordDTO(BaseModel):

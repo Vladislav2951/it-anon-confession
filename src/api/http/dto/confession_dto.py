@@ -1,4 +1,9 @@
+from datetime import datetime
+
+from pydantic import BaseModel
+
 from domain.dto import ConfessionCreateInput, ConfessionUpdateInput
+from domain.validators import BodyString, NicknameStr, TitleStr
 
 
 class ConfessionCreateDTO(ConfessionCreateInput):
@@ -7,3 +12,10 @@ class ConfessionCreateDTO(ConfessionCreateInput):
 
 class ConfessionUpdateDTO(ConfessionUpdateInput):
     pass
+
+
+class ConfessionPublic(BaseModel):
+    title: TitleStr
+    body: BodyString
+    authored_by: NicknameStr
+    created_at: datetime

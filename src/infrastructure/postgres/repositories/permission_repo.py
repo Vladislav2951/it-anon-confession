@@ -3,12 +3,10 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import delete, select, update
-from sqlalchemy.orm import joinedload, noload
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 
-from domain.dto import RoleCreateInput, RoleUpdateInput
-from domain.entities import Permission, Role
-from domain.errors import UpdateError
+from domain.entities import Permission
 from domain.interfaces.database import IPermissionRepo
 from infrastructure.postgres.models import (
     BusinessElementModel,

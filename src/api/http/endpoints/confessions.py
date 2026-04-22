@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from pydantic import UUID7
 
 from api.http.common_exceptions import forbidden, internal_server_error, not_found
-from api.http.dto import ConfessionCreateDTO, ConfessionUpdateDTO
+from api.http.dto import ConfessionCreateDTO, ConfessionPublic, ConfessionUpdateDTO
 from api.http.middleware import IdentityContextFactory, auth_only
 from api.http.response_models import DataResponse, ErrorResponse, MessageResponse
 from core.config import get_settings
@@ -57,7 +57,11 @@ async def create(
     try:
         confession = await confession_srv.create(data, identity_ctx)
         return JSONResponse(
-            {"data": confession.model_dump(mode="json")},
+            {
+                "data": ConfessionPublic.model_validate(
+                    confession, from_attributes=True
+                ).model_dump(mode="json")
+            },
             status_code=status.HTTP_201_CREATED,
         )
 
@@ -83,7 +87,13 @@ async def get_one(
 ):
     try:
         confession = await confession_srv.get_one(confession_id, identity_ctx)
-        return JSONResponse({"data": confession.model_dump(mode="json")})
+        return JSONResponse(
+            {
+                "data": ConfessionPublic.model_validate(
+                    confession, from_attributes=True
+                ).model_dump(mode="json")
+            }
+        )
 
     except NotFoundError:
         raise not_found("Confession not found")
@@ -108,7 +118,12 @@ async def get_all(
 ):
     try:
         confessions = await confession_srv.get_all(identity_ctx)
-        data = [c.model_dump(mode="json") for c in confessions]
+        data = [
+            ConfessionPublic.model_validate(c, from_attributes=True).model_dump(
+                mode="json"
+            )
+            for c in confessions
+        ]
         return JSONResponse({"data": data})
 
     except ForbiddenError:
@@ -134,7 +149,13 @@ async def update(
 ):
     try:
         confession = await confession_srv.update(confession_id, update_data, identity_ctx)
-        return JSONResponse({"data": confession.model_dump(mode="json")})
+        return JSONResponse(
+            {
+                "data": ConfessionPublic.model_validate(
+                    confession, from_attributes=True
+                ).model_dump(mode="json")
+            }
+        )
 
     except NotFoundError:
         raise not_found("Confession not found")

@@ -8,12 +8,12 @@ from fastapi.responses import JSONResponse
 from pydantic import UUID7, EmailStr
 
 from api.http.common_exceptions import forbidden, internal_server_error, not_found
-from api.http.dto import ChangePasswordDTO, UpdateUserDTO
+from api.http.dto import ChangePasswordDTO, UpdateUserDTO, UserPublic
 from api.http.middleware import IdentityContextFactory, auth_only, get_current_user
 from api.http.response_models import DataResponse, ErrorResponse, MessageResponse
 from core.config import get_settings
 from core.dependencies import user_srv
-from domain.dto import IdentityContext, UserPublic
+from domain.dto import IdentityContext
 from domain.enums import Action
 from domain.errors import AppErrorCode, BadLoginError, ForbiddenError, NotFoundError
 
