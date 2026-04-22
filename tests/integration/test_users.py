@@ -43,6 +43,6 @@ class TestUserPermissionsIntegration:
         ]
         mock_uow.user_repo.get_all.return_value = [test_admin]
 
-        response = await auth_admin_client.get("/users/")
+        response = await auth_admin_client.get("/admin/users/")
         assert response.status_code == 200
         assert len(response.json()["data"]) == 1

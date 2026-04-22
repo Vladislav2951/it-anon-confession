@@ -4,15 +4,18 @@ import logging
 from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, Response, status
+from fastapi.responses import JSONResponse
 from pydantic import UUID7
 
-from api.http.common_exceptions import forbidden, internal_server_error
+from api.http.common_exceptions import forbidden, internal_server_error, not_found
+from api.http.dto import UserPublic
 from api.http.middleware import IdentityContextFactory, auth_only
-from api.http.response_models import ErrorResponse, MessageResponse
+from api.http.response_models import DataResponse, ErrorResponse, MessageResponse
 from core.config import get_settings
 from core.dependencies import user_srv
+from domain.entities import Permission
 from domain.enums import Action
-from domain.errors import ForbiddenError
+from domain.errors import ForbiddenError, NotFoundError
 
 
 settings = get_settings()
@@ -37,6 +40,34 @@ router = APIRouter(
     },
 )
 business_element_name = "admin"
+
+
+@router.get(
+    "/",
+    summary="Get users",
+    response_model=DataResponse[UserPublic],
+    responses={status.HTTP_200_OK: {"description": "Success"}},
+)
+async def get_all(
+    user_srv: UserService = Depends(user_srv),
+    identity_ctx: IdentityContext = Depends(
+        IdentityContextFactory(business_element_name, Action.READ)
+    ),
+):
+    try:
+        users = await user_srv.get_all(identity_ctx)
+        users_response = [
+            UserPublic.model_validate(u, from_attributes=True).model_dump(mode="json")
+            for u in users
+        ]
+
+        return JSONResponse({"data": users_response})
+
+    except ForbiddenError:
+        raise forbidden()
+    except Exception as e:
+        logger.exception("Error during getting users: %s", str(e))
+        raise internal_server_error()
 
 
 @router.delete(
