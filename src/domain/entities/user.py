@@ -3,12 +3,12 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional, Self
 
-from pydantic import ConfigDict, EmailStr, Field, SecretStr
+from pydantic import ConfigDict, EmailStr, SecretStr
 from uuid_extensions import uuid7  # type: ignore[import-untyped]
 
 from core.security import get_password_hash
 from domain.entities import BaseEntity
-from domain.validators import BioString, NameStr, NicknameStr, PasswordStr, PermissionSlug
+from domain.validators import BioString, NicknameStr, PasswordStr
 
 
 class User(BaseEntity):

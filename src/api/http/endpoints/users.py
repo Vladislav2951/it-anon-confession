@@ -112,8 +112,7 @@ async def get_all(
 @router.delete(
     "/me",
     summary="Delete self account",
-    response_model=MessageResponse,
-    responses={status.HTTP_200_OK: {"description": "Success"}},
+    responses={status.HTTP_204_NO_CONTENT: {"description": "Success"}},
 )
 async def delete_self(
     user: User = Depends(get_current_user),
@@ -125,7 +124,7 @@ async def delete_self(
     try:
         await user_srv.soft_delete(user.id, identity_ctx)
 
-        response = JSONResponse({"message": "Account has been deleted"})
+        response = Response(status_code=status.HTTP_204_NO_CONTENT)
         response.delete_cookie(key="session_id")
         return response
 

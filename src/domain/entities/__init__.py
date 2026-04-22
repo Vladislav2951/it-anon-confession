@@ -7,6 +7,3 @@ from .user import User
 
 
 __all__ = ["User", "BaseEntity", "Role", "Permission", "Session", "Confession"]
-
-Role.model_rebuild()
-User.model_rebuild()
