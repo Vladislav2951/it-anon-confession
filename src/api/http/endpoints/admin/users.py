@@ -69,3 +69,33 @@ async def delete(
     except Exception as e:
         logger.exception("Error during deleting account: %s", str(e))
         raise internal_server_error()
+
+
+@router.get(
+    "/{user_id}/permissions",
+    summary="Get all user permissions",
+    response_model=DataResponse[list[Permission]],
+    responses={
+        status.HTTP_200_OK: {"description": "Success"},
+        status.HTTP_404_NOT_FOUND: {"model": ErrorResponse},
+    },
+)
+async def get_user_permissions(
+    user_id: UUID7,
+    user_srv: UserService = Depends(user_srv),
+    identity_ctx: IdentityContext = Depends(
+        IdentityContextFactory(business_element_name, Action.READ)
+    ),
+):
+    try:
+        permissions = await user_srv.get_user_permissions(user_id, identity_ctx)
+        data = [p.model_dump(mode="json") for p in permissions]
+        return JSONResponse({"data": data})
+
+    except NotFoundError as e:
+        raise not_found("User not found")
+    except ForbiddenError:
+        raise forbidden()
+    except Exception as e:
+        logger.exception("Error during fetching user permissions: %s", str(e))
+        raise internal_server_error()

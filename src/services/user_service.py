@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from pydantic import UUID7, EmailStr
 
     from domain.dto import IdentityContext
+    from domain.entities import Permission
     from domain.interfaces.database.uow import IDatabaseTransactionFactory
     from services import AccessService
 
@@ -137,3 +138,18 @@ class UserService:
 
             # Уже удалён
             return None
+
+    async def get_user_permissions(
+        self, user_id: UUID7, identity_ctx: IdentityContext
+    ) -> list[Permission]:
+        await self.access_srv.check_access(
+            identity_ctx.current_user,
+            identity_ctx.business_element_name,
+            identity_ctx.action,
+        )
+
+        async with self._db_transaction_factory() as t:
+            if not await t.user_repo.get_one(user_id):
+                raise NotFoundError(f"User {user_id} not found")
+
+            return await t.user_repo.get_permissions(user_id)

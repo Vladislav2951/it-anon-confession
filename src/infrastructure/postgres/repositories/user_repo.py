@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import logging
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import insert, select, update
-from sqlalchemy.orm import joinedload, noload
+from sqlalchemy.orm import noload
 
 from domain.dto import ChangePasswordUserInput, PatchUpdateUserInput
 from domain.entities import Permission, User
@@ -146,17 +146,3 @@ class UserRepo(BaseRepo, IUserRepo):
         permission_models = result.scalars().all()
 
         return [Permission.model_validate(p) for p in permission_models]
-
-    # def _update_model_from_entity(self, model: UserModel, entity: User):
-    #     data = self._get_model_data(entity)
-    #     for key, value in data.items():
-    #         setattr(model, key, value)
-
-    # def _get_model_data(self, user: User) -> dict[str, Any]:
-    #     return {
-    #         "email": user.email,
-    #         "password_hash": user.password_hash.get_secret_value(),
-    #         "nickname": user.nickname,
-    #         "bio": user.bio,
-    #         "deleted_at": user.deleted_at,
-    #     }
