@@ -12,7 +12,6 @@ from main import app
 
 @pytest.fixture
 def mock_uow():
-    """Создает мок Unit of Work со всеми репозиториями."""
     uow = MagicMock()
     uow.user_repo = AsyncMock()
     uow.session_repo = AsyncMock()
@@ -28,7 +27,6 @@ def mock_uow():
 
 @pytest.fixture
 def mock_uow_factory(mock_uow):
-    """Фабрика, возвращающая один и тот же мок UoW."""
     factory = MagicMock()
     factory.return_value = mock_uow
     return factory

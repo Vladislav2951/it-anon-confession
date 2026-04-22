@@ -69,20 +69,6 @@ asyncio_default_fixture_loop_scope = "session"
 addopts = "--cov=src --cov-report=term-missing"
 pythonpath = ". src"
 
-[tool.pytest_env]
-ENV = "test"
-HOST = "localhost"
-PORT = 8000
-SESSION_DURATION_DAYS = 30
-LOG_LEVEL = "DEBUG"
-CORS_ORIGINS=["http://localhost:3000","http://127.0.0.1:3000","https://my-frontend-app.com"]
-# postgres
-DB_HOST = "localhost"
-DB_PORT = 5432
-DB_NAME = "postgres"
-DB_USERNAME = "postgres"
-DB_PASSWORD = "postgres"
-
 [tool.coverage.run]
 omit = ["tests/*"]
 
