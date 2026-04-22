@@ -12,7 +12,7 @@ from api.http.dto import ConfessionCreateDTO, ConfessionPublic, ConfessionUpdate
 from api.http.middleware import IdentityContextFactory, auth_only
 from api.http.response_models import DataResponse, ErrorResponse, MessageResponse
 from core.config import get_settings
-from core.dependencies import confession_srv  # Зависимость для сервиса
+from core.dependencies import confession_srv
 from domain.entities import Confession
 from domain.enums import Action
 from domain.errors import ForbiddenError, NotFoundError
@@ -44,7 +44,7 @@ business_element_name = "confessions"
 @router.post(
     "/",
     summary="Create confession",
-    response_model=DataResponse[Confession],
+    response_model=DataResponse[ConfessionPublic],
     responses={status.HTTP_201_CREATED: {"description": "Success"}},
 )
 async def create(
@@ -75,7 +75,7 @@ async def create(
 @router.get(
     "/{confession_id}",
     summary="Get confession",
-    response_model=DataResponse[Confession],
+    response_model=DataResponse[ConfessionPublic],
     responses={status.HTTP_200_OK: {"description": "Success"}},
 )
 async def get_one(
@@ -107,7 +107,7 @@ async def get_one(
 @router.get(
     "/",
     summary="Get all confessions",
-    response_model=DataResponse[list[Confession]],
+    response_model=DataResponse[list[ConfessionPublic]],
     responses={status.HTTP_200_OK: {"description": "Success"}},
 )
 async def get_all(
@@ -136,7 +136,7 @@ async def get_all(
 @router.patch(
     "/{confession_id}",
     summary="Update confession",
-    response_model=DataResponse[Confession],
+    response_model=DataResponse[ConfessionPublic],
     responses={status.HTTP_200_OK: {"description": "Success"}},
 )
 async def update(
@@ -169,7 +169,6 @@ async def update(
 @router.delete(
     "/{confession_id}",
     summary="Delete confession",
-    response_model=MessageResponse,
     responses={status.HTTP_204_NO_CONTENT: {"description": "Success"}},
 )
 async def delete(

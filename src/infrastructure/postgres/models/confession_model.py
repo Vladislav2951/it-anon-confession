@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 import uuid
 
-from sqlalchemy import TIMESTAMP, UUID, ForeignKey, Integer, String
+from sqlalchemy import TIMESTAMP, UUID, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from infrastructure.postgres.models.base import Base

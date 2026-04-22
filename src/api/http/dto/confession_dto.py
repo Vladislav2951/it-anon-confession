@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import UUID7, BaseModel
 
 from domain.dto import ConfessionCreateInput, ConfessionUpdateInput
 from domain.validators import BodyString, NicknameStr, TitleStr
@@ -15,6 +15,7 @@ class ConfessionUpdateDTO(ConfessionUpdateInput):
 
 
 class ConfessionPublic(BaseModel):
+    id: UUID7
     title: TitleStr
     body: BodyString
     authored_by: NicknameStr
