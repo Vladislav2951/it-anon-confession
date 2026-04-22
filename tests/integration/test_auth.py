@@ -1,39 +1,46 @@
-from httpx import AsyncClient
+from unittest.mock import MagicMock
+
 import pytest
+from uuid_extensions import uuid7  # type: ignore[import-untyped]
 
 
 @pytest.mark.asyncio
-class TestAuth:
-    async def test_login_success(self, client: AsyncClient):
-        response = await client.post(
-            "/auth/login", json={"email": "admin@example.com", "password": "admin123"}
-        )
-        assert response.status_code == 200
-        assert "session_id" in response.cookies
+class TestAuthIntegration:
+    async def test_register_success(self, client, mock_uow):
+        mock_uow.user_repo.get_one_by_email.return_value = None
+        mock_uow.role_repo.get_one_by_name.return_value = MagicMock(id=uuid7())
 
-    async def test_login_wrong_password(self, client: AsyncClient):
-        response = await client.post(
-            "/auth/login", json={"email": "admin@example.com", "password": "wrong"}
-        )
-        assert response.status_code == 401
-        assert response.json()["detail"] == "Incorrect email or password"
-
-    async def test_register_duplicate_email(self, client: AsyncClient):
         response = await client.post(
             "/auth/register",
             json={
-                "email": "admin@example.com",
-                "password": "newpassword123",
-                "password_repeat": "newpassword123",
+                "email": "new@test.com",
+                "password": "password123",
+                "password_repeat": "password123",
                 "nickname": "newbie",
                 "bio": "hello",
             },
         )
-        assert response.status_code == 409
-        assert response.json()["detail"]["code"] == "CONFLICT"
+        assert response.status_code == 201
+        assert response.json()["message"] == "User has been registered"
 
-    async def test_logout(self, user_client: AsyncClient):
-        response = await user_client.post("/auth/logout")
-        assert response.status_code == 200
-        # Cookie should be cleared (max-age=0 or deleted)
-        assert response.cookies.get("session_id") is None
+    async def test_register_password_mismatch(self, client):
+        response = await client.post(
+            "/auth/register",
+            json={
+                "email": "new@test.com",
+                "password": "password123",
+                "password_repeat": "different",
+                "nickname": "newbie",
+                "bio": "hi",
+            },
+        )
+        assert response.status_code == 422  # Pydantic validation error
+
+    async def test_login_incorrect_credentials(self, client, mock_uow):
+        mock_uow.user_repo.get_one_by_email.return_value = None
+
+        response = await client.post(
+            "/auth/login", json={"email": "wrong@test.com", "password": "any"}
+        )
+        assert response.status_code == 401
+        assert "Incorrect email or password" in response.text

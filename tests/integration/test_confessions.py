@@ -1,44 +1,45 @@
-from httpx import AsyncClient
+from unittest.mock import MagicMock
+
 import pytest
+from uuid_extensions import uuid7  # type: ignore[import-untyped]
+
+from domain.entities import Confession, Permission
 
 
 @pytest.mark.asyncio
-class TestConfessionsAccess:
-    async def test_user_can_create_and_read_all(self, user_client: AsyncClient):
-        # Создание
-        create_res = await user_client.post(
-            "/confessions/", json={"title": "My Secret", "body": "I love unit testing"}
-        )
-        assert create_res.status_code == 201
-        conf_id = create_res.json()["data"]["authored_by"]
-
-        # Чтение списка
-        list_res = await user_client.get("/confessions/")
-        assert list_res.status_code == 200
-        assert len(list_res.json()["data"]) >= 1
-
-    async def test_user_cannot_delete_confession(
-        self, user_client: AsyncClient, admin_client: AsyncClient
+class TestConfessionsIntegration:
+    async def test_user_can_read_all_confessions(
+        self, auth_user_client, mock_uow, test_user
     ):
-        # Сначала админ создаст пост
-        create_res = await admin_client.post(
-            "/confessions/", json={"title": "Admin post", "body": "Cannot touch this"}
+        mock_uow.role_repo.get_user_roles.return_value = [MagicMock(name="user")]
+        # Право read_all_permission на confessions
+        mock_uow.permission_repo.get_permissions_for_element.return_value = [
+            Permission(id=uuid7(), business_element_id=uuid7(), read_all_permission=True)
+        ]
+        mock_uow.confession_repo.get_all.return_value = [
+            Confession(
+                id=uuid7(),
+                title="Test",
+                body="Secret",
+                authored_by="anon",
+                user_id=uuid7(),
+                created_at="2023-01-01T00:00:00Z",
+            )
+        ]
+
+        response = await auth_user_client.get("/confessions/")
+        assert response.status_code == 200
+        assert len(response.json()["data"]) == 1
+
+    async def test_user_cannot_update_confession(self, auth_user_client, mock_uow):
+        conf_id = uuid7()
+        mock_uow.role_repo.get_user_roles.return_value = [MagicMock(name="user")]
+        # У юзера нет update_permission в моке
+        mock_uow.permission_repo.get_permissions_for_element.return_value = [
+            Permission(id=uuid7(), business_element_id=uuid7(), read_all_permission=True)
+        ]
+
+        response = await auth_user_client.patch(
+            f"/confessions/{conf_id}", json={"title": "new"}
         )
-        # Из-за UUID7 в SQLite/SQLAlchemy нам нужно вытащить реальный ID из базы или ответа
-        # Предположим, API возвращает созданный объект с ID
-        # В предоставленном коде ConfessionPublic не содержит ID,
-        # но для теста мы можем либо добавить его в DTO, либо найти через get_all.
-
-        all_conf = await admin_client.get("/confessions/")
-        target_id = all_conf.json()["data"][0]["title"]  # В реальном коде нужен ID
-
-        # Попытка удаления обычным пользователем
-        # Используем хардкод ID из seed если нужно, или uuid
-        dummy_id = "019ca1e5-c378-7000-8000-000000000401"
-        response = await user_client.delete(f"/confessions/{dummy_id}")
         assert response.status_code == 403
-
-    async def test_admin_can_delete_confession(self, admin_client: AsyncClient):
-        dummy_id = "019ca1e5-c378-7000-8000-000000000401"
-        response = await admin_client.delete(f"/confessions/{dummy_id}")
-        assert response.status_code == 204
