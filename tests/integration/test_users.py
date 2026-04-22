@@ -9,7 +9,6 @@ from domain.entities import Permission
 @pytest.mark.asyncio
 class TestUserPermissionsIntegration:
     async def test_user_get_own_profile(self, auth_user_client, mock_uow, test_user):
-        # Мокаем права: юзер может читать свое
         mock_uow.role_repo.get_user_roles.return_value = [
             MagicMock(id=uuid7(), name="user")
         ]

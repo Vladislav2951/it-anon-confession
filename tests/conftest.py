@@ -46,7 +46,7 @@ async def client(mock_uow_factory) -> AsyncGenerator[AsyncClient, None]:
         UserService,
     )
 
-    # Инициализируем сервисы с мок-фабрикой
+    # Инициализация сервисов с мок-фабрикой
     t_access = AccessService(mock_uow_factory)
     t_auth = AuthService(mock_uow_factory)
     t_session = SessionService(mock_uow_factory)
@@ -54,7 +54,7 @@ async def client(mock_uow_factory) -> AsyncGenerator[AsyncClient, None]:
     t_role = RoleService(mock_uow_factory, t_access)
     t_conf = ConfessionService(mock_uow_factory, t_access)
 
-    # Подменяем зависимости в FastAPI
+    # Зависимости в FastAPI
     app.dependency_overrides[dependencies.auth_srv] = lambda: t_auth
     app.dependency_overrides[dependencies.session_srv] = lambda: t_session
     app.dependency_overrides[dependencies.user_srv] = lambda: t_user

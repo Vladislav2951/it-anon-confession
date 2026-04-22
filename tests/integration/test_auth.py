@@ -7,7 +7,9 @@ from uuid_extensions import uuid7  # type: ignore[import-untyped]
 @pytest.mark.asyncio
 class TestAuthIntegration:
     async def test_register_success(self, client, mock_uow):
+        # Пользователь не зарегистрирован
         mock_uow.user_repo.get_one_by_email.return_value = None
+        # Получение роли user
         mock_uow.role_repo.get_one_by_name.return_value = MagicMock(id=uuid7())
 
         response = await client.post(
