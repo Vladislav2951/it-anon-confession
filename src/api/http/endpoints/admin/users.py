@@ -3,17 +3,16 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, Response, status
 from pydantic import UUID7
 
-from api.http.common_exceptions import internal_server_error
+from api.http.common_exceptions import forbidden, internal_server_error
 from api.http.middleware import IdentityContextFactory, auth_only
 from api.http.response_models import ErrorResponse, MessageResponse
 from core.config import get_settings
 from core.dependencies import user_srv
 from domain.enums import Action
-from domain.errors import AppErrorCode, ForbiddenError
+from domain.errors import ForbiddenError
 
 
 settings = get_settings()
@@ -65,14 +64,8 @@ async def delete(
             "An attempt by the last administrator (%s) to delete himself was detected",
             user_id,
         )
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "code": AppErrorCode.FORBIDDEN,
-                "message": "Are you trying to remove yourself?",
-            },
-        )
+        raise forbidden("Are you trying to remove yourself?")
 
     except Exception as e:
         logger.exception("Error during deleting account: %s", str(e))
-        raise internal_server_error
+        raise internal_server_error()

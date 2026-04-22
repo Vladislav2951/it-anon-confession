@@ -73,12 +73,12 @@ async def get_one(
         )
 
     except NotFoundError:
-        raise not_found
+        raise not_found("User not found")
     except ForbiddenError:
-        raise forbidden
+        raise forbidden()
     except Exception as e:
         logger.exception("Error during getting user: %s", str(e))
-        raise internal_server_error
+        raise internal_server_error()
 
 
 @router.get(
@@ -103,10 +103,10 @@ async def get_all(
         return JSONResponse({"data": users_response})
 
     except ForbiddenError:
-        raise forbidden
+        raise forbidden()
     except Exception as e:
         logger.exception("Error during getting users: %s", str(e))
-        raise internal_server_error
+        raise internal_server_error()
 
 
 @router.delete(
@@ -130,10 +130,10 @@ async def delete_self(
         return response
 
     except ForbiddenError:
-        raise forbidden
+        raise forbidden()
     except Exception as e:
         logger.exception("Error during self account delete: %s", str(e))
-        raise internal_server_error
+        raise internal_server_error()
 
 
 @router.patch(
@@ -164,12 +164,12 @@ async def update(
         )
 
     except ForbiddenError:
-        raise forbidden
+        raise forbidden()
     except NotFoundError:
-        raise not_found
+        raise not_found("User not found")
     except Exception as e:
         logger.exception("Error during user patch update: %s", str(e))
-        raise internal_server_error
+        raise internal_server_error()
 
 
 @router.post(
@@ -206,9 +206,9 @@ async def change_password(
         )
 
     except ForbiddenError:
-        raise forbidden
+        raise forbidden()
     except NotFoundError:
-        raise not_found
+        raise not_found("User not found")
     except Exception as e:
         logger.exception("Error during user changing password: %s", str(e))
-        raise internal_server_error
+        raise internal_server_error()

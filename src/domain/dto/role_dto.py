@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import UUID7, BaseModel, Field
 
 from domain.validators import NameStr
 
@@ -9,3 +9,7 @@ class RoleCreateInput(BaseModel):
 
 class RoleUpdateInput(BaseModel):
     name: NameStr = Field(default=None)  # type: ignore[assignment]
+
+
+class AssignPermissionInput(BaseModel):
+    permission_id: UUID7

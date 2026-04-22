@@ -29,22 +29,22 @@ async def auth_only(
     session_id = request.cookies.get("session_id")
 
     if not session_id:
-        raise unauthorized
+        raise unauthorized()
 
     session = await session_srv.get_one(session_id)
     if not session:
-        raise unauthorized
+        raise unauthorized()
 
     if session.is_expired():
         await session_srv.delete(session_id)
-        raise unauthorized
+        raise unauthorized()
 
     identity_ctx = IdentityContext(
         current_user=None, business_element_name="__system__", action=Action.READ
     )
     user: User | None = await user_srv.get_one(session.user_id, identity_ctx)
     if not user:
-        raise unauthorized
+        raise unauthorized()
 
     request.state.user = user
     request.state.session = session
