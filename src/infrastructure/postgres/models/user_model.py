@@ -6,19 +6,18 @@ import uuid
 
 from sqlalchemy import TIMESTAMP, UUID, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from uuid_extensions import uuid7  # type: ignore[import-untyped]
 
 from infrastructure.postgres.models.base import Base
 
 
 if TYPE_CHECKING:
-    from infrastructure.postgres.models import RoleModel, SessionModel
+    from infrastructure.postgres.models import ConfessionModel, RoleModel, SessionModel
 
 
 class UserModel(Base):
     __tablename__ = "users"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid7)
+    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True)
     email: Mapped[str] = mapped_column(unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column("password", nullable=False)
     nickname: Mapped[str] = mapped_column(String(16), unique=True, nullable=False)
@@ -31,4 +30,8 @@ class UserModel(Base):
 
     sessions: Mapped[list[SessionModel]] = relationship(
         "SessionModel", back_populates="user", cascade="all, delete-orphan"
+    )
+
+    confessions: Mapped[list[ConfessionModel]] = relationship(
+        "ConfessionModel", back_populates="user", cascade="all, delete-orphan"
     )

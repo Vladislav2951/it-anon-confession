@@ -1,5 +1,12 @@
 from infrastructure.postgres.uow import TransactionFactory
-from services import AccessService, AuthService, RoleService, SessionService, UserService
+from services import (
+    AccessService,
+    AuthService,
+    ConfessionService,
+    RoleService,
+    SessionService,
+    UserService,
+)
 
 
 _database_uow_factory = TransactionFactory()
@@ -10,6 +17,7 @@ _session_service = SessionService(_database_uow_factory)
 _access_service = AccessService(_database_uow_factory)
 _role_service = RoleService(_database_uow_factory, _access_service)
 _user_service = UserService(_database_uow_factory, _access_service)
+_confession_service = ConfessionService(_database_uow_factory, _access_service)
 
 
 def auth_srv() -> AuthService:
@@ -30,3 +38,7 @@ def access_srv() -> AccessService:
 
 def role_srv() -> RoleService:
     return _role_service
+
+
+def confession_srv() -> ConfessionService:
+    return _confession_service

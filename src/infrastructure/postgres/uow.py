@@ -7,6 +7,7 @@ from domain.interfaces.database.uow import (
     IDatabaseTransactionUoW,
 )
 from infrastructure.postgres.repositories import (
+    ConfessionRepo,
     PermissionRepo,
     RoleRepo,
     SessionRepo,
@@ -20,6 +21,7 @@ if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
     from domain.interfaces.database import (
+        IConfessionRepo,
         IPermissionRepo,
         IRoleRepo,
         ISessionRepo,
@@ -83,6 +85,10 @@ class TransactionUoW(IDatabaseTransactionUoW):
     @property
     def permission_repo(self) -> IPermissionRepo:
         return self._get_repo(PermissionRepo)
+
+    @property
+    def confession_repo(self) -> IConfessionRepo:
+        return self._get_repo(ConfessionRepo)
 
 
 class TransactionFactory(IDatabaseTransactionFactory):

@@ -5,7 +5,6 @@ import uuid
 
 from sqlalchemy import UUID, Boolean, String, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from uuid_extensions import uuid7  # type: ignore[import-untyped]
 
 from infrastructure.postgres.models.base import Base
 
@@ -17,7 +16,7 @@ if TYPE_CHECKING:
 class RoleModel(Base):
     __tablename__ = "roles"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid7)
+    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True)
     name: Mapped[str] = mapped_column(String(64), unique=True)
     is_system: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default=text("false")

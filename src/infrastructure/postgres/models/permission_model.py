@@ -5,7 +5,6 @@ import uuid
 
 from sqlalchemy import UUID, Boolean, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from uuid_extensions import uuid7  # type: ignore[import-untyped]
 
 from infrastructure.postgres.models.base import Base
 
