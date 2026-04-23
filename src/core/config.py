@@ -3,7 +3,7 @@ from importlib.metadata import PackageNotFoundError, version
 from ipaddress import IPv4Address
 from pathlib import Path
 import tomllib
-from typing import Literal, Union
+from typing import Literal, Optional, Union
 
 from pydantic import IPvAnyAddress, PositiveInt, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -39,7 +39,7 @@ class Settings(BaseSettings):
 
     SESSION_DURATION_DAYS: PositiveInt = 30
 
-    CORS_ORIGINS: list[str] = []
+    CORS_ORIGINS: Optional[list[str]] = None
 
     # postgres
     DB_ENGINE: str = "postgresql+asyncpg"
