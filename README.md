@@ -99,9 +99,9 @@
 
 ## Пользователи (/users)
 
-* **GET** `/users/{identifier}` — Получение публичного профиля (по UUID или Email)  
-* **PATCH** `/users/{user_id}` — Частичное обновление своих данных (nickname, bio)  
-* **POST** `/users/{user_id}/change-password` — Смена пароля (требует старый пароль)  
+* **GET** `/users/{identifier}` — Получение профиля (по UUID или Email)  
+* **PATCH** `/users/{id}` — Частичное обновление своих данных (nickname, bio)  
+* **POST** `/users/{id}/change-password` — Смена пароля (требует старый пароль)  
 * **DELETE** `/users/me` — Удаление собственного аккаунта ("мягкое" удаление)  
 
 ---
@@ -111,7 +111,7 @@
 * **POST** `/confessions/` — Создать новое анонимное признание  
 * **GET** `/confessions/` — Список всех признаний
 * **GET** `/confessions/{id}` — Детали конкретного признания  
-* **PATCH** `/confessions/{id}` — Редактирование текста
+* **PATCH** `/confessions/{id}` — Редактирование заголовка и текста
 * **DELETE** `/confessions/{id}` — Удаление признания  
 
 ---
@@ -123,10 +123,10 @@
 ### Управление пользователями
 
 * **GET** `/admin/users/` — Список всех зарегистрированных пользователей  
-* **DELETE** `/admin/users/{user_id}` — Принудительное удаление пользователя  
-* **GET** `/admin/users/{user_id}/permissions` — Просмотр всех прав пользователя  
-* **POST** `/admin/users/{user_id}/assign-role/{role_id}` — Назначить роль пользователю  
-* **POST** `/admin/users/{user_id}/revoke-role/{role_id}` — Отозвать роль у пользователя  
+* **DELETE** `/admin/users/{user_id}` — Удаление пользователя  
+* **GET** `/admin/users/{id}/permissions` — Просмотр всех прав пользователя  
+* **POST** `/admin/users/{id}/assign-role/{role_id}` — Назначить роль пользователю  
+* **POST** `/admin/users/{id}/revoke-role/{role_id}` — Отозвать роль у пользователя  
 
 ### Управление ролями и правами
 
@@ -134,12 +134,12 @@
 * **POST** `/admin/roles/` — Создание новой роли  
 * **PATCH** `/admin/roles/{id}` — Переименование роли (кроме системных)  
 * **DELETE** `/admin/roles/{id}` — Удаление роли (кроме системных)
-* **POST** `/admin/roles/{id}/assign-permission/{pid}` — Назначить разрешение роли  
-* **POST** `/admin/roles/{id}/revoke-permission/{pid}` — Убрать разрешение у роли  
+* **POST** `/admin/roles/{id}/assign-permission/{permission_id}` — Назначить разрешение роли  
+* **POST** `/admin/roles/{id}/revoke-permission/{permission_id}` — Убрать разрешение у роли  
 * **GET** `/admin/permissions/` — Список всех разрешений системы  
 * **GET** `/admin/business-elements/` — Список бизнес-элементов системы  
 
-## Типовые коды ошибок
+### Типовые коды ошибок
 
 * **400 CONFLICT** — Некорректный запрос.
 * **401 UNAUTHORIZED** — Сессия отсутствует, истекла или невалидна.
@@ -229,7 +229,7 @@
   curl -X POST http://localhost:8000/auth/register \
       -H "Content-Type: application/json" \
       -d '{
-        "email": "dev@example.com",
+        "email": "bug_hunter@example.com",
         "password": "strong_password_123",
         "password_repeat": "strong_password_123",
         "nickname": "bug_hunter",
