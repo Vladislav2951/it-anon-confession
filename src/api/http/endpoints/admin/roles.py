@@ -156,7 +156,7 @@ async def update(
 
 @router.delete(
     "/{role_id}",
-    summary="Delete account",
+    summary="Delete role",
     response_model=MessageResponse,
     responses={status.HTTP_204_NO_CONTENT: {"description": "Success"}},
 )
@@ -172,8 +172,8 @@ async def delete(
 
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-    except ForbiddenError:
-        raise forbidden()
+    except ForbiddenError as e:
+        raise forbidden(str(e))
     except Exception as e:
         logger.exception("Error during deleting role: %s", str(e))
         raise internal_server_error()

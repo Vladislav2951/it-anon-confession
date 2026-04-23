@@ -4,11 +4,12 @@ import logging
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import delete, insert, select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import noload
 
 from domain.dto import RoleCreateInput, RoleUpdateInput
 from domain.entities import Role
-from domain.errors import UpdateError
+from domain.errors import ConflictError, UpdateError
 from domain.interfaces.database import IRoleRepo
 from infrastructure.postgres.models import RoleModel, role_permissions, user_roles
 from infrastructure.postgres.repositories.base import BaseRepo
@@ -24,7 +25,7 @@ if TYPE_CHECKING:
 
 class RoleRepo(BaseRepo, IRoleRepo):
     async def create(self, role: Role) -> Role:
-        new_role = RoleModel(name=role.name)
+        new_role = RoleModel(id=role.id, name=role.name)
 
         self._session.add(new_role)
         await self._session.flush()
@@ -107,7 +108,10 @@ class RoleRepo(BaseRepo, IRoleRepo):
         stmt = insert(role_permissions).values(
             role_id=role_id, permission_id=permission_id
         )
-        await self._session.execute(stmt)
+        try:
+            await self._session.execute(stmt)
+        except IntegrityError:
+            raise ConflictError(f"Permission {permission_id} has already been assigned")
 
     async def revoke_permission(self, role_id: UUID7, permission_id: UUID7):
         stmt = delete(role_permissions).where(

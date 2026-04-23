@@ -120,7 +120,6 @@ class RoleService:
 
             return await t.role_repo.delete(id)
 
-    # TODO conflict error
     async def assign_permission(
         self, role_id: UUID7, permission_id: UUID7, identity_ctx: IdentityContext
     ):
