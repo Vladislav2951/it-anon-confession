@@ -1,5 +1,6 @@
 from .access_service import AccessService
 from .auth_service import AuthService
+from .business_element_service import BusinessElementService
 from .confession_service import ConfessionService
 from .permission_service import PermissionService
 from .role_service import RoleService
@@ -15,4 +16,5 @@ __all__ = [
     "RoleService",
     "ConfessionService",
     "PermissionService",
+    "BusinessElementService",
 ]

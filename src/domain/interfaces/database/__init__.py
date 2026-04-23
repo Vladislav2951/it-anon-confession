@@ -1,3 +1,4 @@
+from .business_element_repo import IBusinessElementRepo
 from .confession_repo import IConfessionRepo
 from .permission_repo import IPermissionRepo
 from .role_repo import IRoleRepo
@@ -5,4 +6,11 @@ from .session_repo import ISessionRepo
 from .user_repo import IUserRepo
 
 
-__all__ = ["IUserRepo", "ISessionRepo", "IRoleRepo", "IPermissionRepo", "IConfessionRepo"]
+__all__ = [
+    "IUserRepo",
+    "ISessionRepo",
+    "IRoleRepo",
+    "IPermissionRepo",
+    "IConfessionRepo",
+    "IBusinessElementRepo",
+]

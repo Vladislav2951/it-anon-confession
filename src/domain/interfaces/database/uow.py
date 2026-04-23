@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Self
 
 if TYPE_CHECKING:
     from domain.interfaces.database import (
+        IBusinessElementRepo,
         IConfessionRepo,
         IPermissionRepo,
         IRoleRepo,
@@ -58,6 +59,11 @@ class IDatabaseTransactionUoW(ABC):
     @property
     @abstractmethod
     def confession_repo(self) -> IConfessionRepo:
+        pass
+
+    @property
+    @abstractmethod
+    def business_element_repo(self) -> IBusinessElementRepo:
         pass
 
 

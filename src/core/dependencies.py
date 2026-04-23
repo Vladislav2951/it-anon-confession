@@ -2,6 +2,7 @@ from infrastructure.postgres.uow import TransactionFactory
 from services import (
     AccessService,
     AuthService,
+    BusinessElementService,
     ConfessionService,
     PermissionService,
     RoleService,
@@ -21,6 +22,7 @@ _role_service = RoleService(_database_uow_factory, _access_service)
 _permission_service = PermissionService(_database_uow_factory, _access_service)
 _user_service = UserService(_database_uow_factory, _access_service)
 _confession_service = ConfessionService(_database_uow_factory, _access_service)
+_business_element_service = BusinessElementService(_database_uow_factory, _access_service)
 
 
 def auth_srv() -> AuthService:
@@ -49,3 +51,7 @@ def confession_srv() -> ConfessionService:
 
 def permission_srv() -> PermissionService:
     return _permission_service
+
+
+def business_element_srv() -> BusinessElementService:
+    return _business_element_service

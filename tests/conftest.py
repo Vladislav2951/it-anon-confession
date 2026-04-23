@@ -18,6 +18,7 @@ def mock_uow():
     uow.role_repo = AsyncMock()
     uow.permission_repo = AsyncMock()
     uow.confession_repo = AsyncMock()
+    uow.business_element_repo = AsyncMock()
 
     # Настройка контекстного менеджера (async with)
     uow.__aenter__.return_value = uow
@@ -38,6 +39,7 @@ async def client(mock_uow_factory) -> AsyncGenerator[AsyncClient, None]:
     from services import (
         AccessService,
         AuthService,
+        BusinessElementService,
         ConfessionService,
         RoleService,
         SessionService,
@@ -51,6 +53,7 @@ async def client(mock_uow_factory) -> AsyncGenerator[AsyncClient, None]:
     t_user = UserService(mock_uow_factory, t_access)
     t_role = RoleService(mock_uow_factory, t_access)
     t_conf = ConfessionService(mock_uow_factory, t_access)
+    t_be = BusinessElementService(mock_uow_factory, t_access)
 
     # Зависимости в FastAPI
     app.dependency_overrides[dependencies.auth_srv] = lambda: t_auth
@@ -59,6 +62,7 @@ async def client(mock_uow_factory) -> AsyncGenerator[AsyncClient, None]:
     app.dependency_overrides[dependencies.role_srv] = lambda: t_role
     app.dependency_overrides[dependencies.access_srv] = lambda: t_access
     app.dependency_overrides[dependencies.confession_srv] = lambda: t_conf
+    app.dependency_overrides[dependencies.business_element_srv] = lambda: t_be
 
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
