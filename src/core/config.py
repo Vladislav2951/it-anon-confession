@@ -43,8 +43,8 @@ class Settings(BaseSettings):
 
     # postgres
     DB_ENGINE: str = "postgresql+asyncpg"
-    DB_HOST: str = "localhost"
-    DB_PORT: int = 3306
+    DB_HOST: str = "postgres"
+    DB_PORT: int = 5432
     DB_NAME: str = "postgres"
     DB_USERNAME: str = "postgres"
     DB_PASSWORD: SecretStr = SecretStr("postgres")

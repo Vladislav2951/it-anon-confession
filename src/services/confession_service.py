@@ -92,9 +92,6 @@ class ConfessionService:
             if not confession:
                 raise NotFoundError(f"Confession {id} not found")
 
-            # if confession.user_id != identity_ctx.current_user.id:
-            #     raise ForbiddenError("You can only edit your own confessions")
-
             return await t.confession_repo.update(id, update_inp)
 
     async def delete(self, id: UUID7, identity_ctx: IdentityContext) -> None:
@@ -109,9 +106,5 @@ class ConfessionService:
             confession = await t.confession_repo.get_one(id)
             if not confession:
                 return None
-
-            # Проверка владения: только автор
-            # if confession.user_id != identity_ctx.current_user.id:
-            #     raise ForbiddenError("You can only delete your own confessions")
 
             await t.confession_repo.delete(id)

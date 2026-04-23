@@ -41,7 +41,7 @@ class RoleService:
 
         async with self._db_transaction_factory() as t:
             if await t.role_repo.get_one_by_name(role.name):
-                raise ConflictError("'{role.name}' is already exist")
+                raise ConflictError(f"'{role.name}' already exists")
 
             return await t.role_repo.create(role)
 

@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Literal
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 
+from api.http.common_exceptions import conflict, internal_server_error, unauthorized
 from api.http.dto import LoginDTO, RegisterDTO
 from api.http.middleware import auth_only, guest_only
 from api.http.response_models import ErrorResponse, MessageResponse
@@ -93,19 +94,12 @@ async def login(
         )
 
         return response
+
     except BadLoginError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password"
-        )
+        raise unauthorized("Incorrect email or password")
     except Exception:
         logger.exception("Unexpected error while logging %s user", credentials.email)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "code": AppErrorCode.INTERNAL_SERVER_ERROR,
-                "message": "An unexpected error occurred",
-            },
-        )
+        raise internal_server_error()
 
 
 @router.post(
@@ -135,13 +129,7 @@ async def logout(request: Request, session_srv: SessionService = Depends(session
 
     except Exception as e:
         logger.exception("Error during logout: %s", str(e))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "code": AppErrorCode.INTERNAL_SERVER_ERROR,
-                "message": "An unexpected error occurred",
-            },
-        )
+        raise internal_server_error()
 
 
 @router.post(
@@ -153,7 +141,7 @@ async def logout(request: Request, session_srv: SessionService = Depends(session
     responses={
         status.HTTP_201_CREATED: {"description": "User has been registered"},
         status.HTTP_409_CONFLICT: {
-            "description": "User is already exist",
+            "description": "User already exists",
             "model": ErrorResponse,
         },
     },
@@ -165,18 +153,9 @@ async def register(data: RegisterDTO, srv: AuthService = Depends(auth_srv)):
             status_code=status.HTTP_201_CREATED,
             content={"message": "User has been registered"},
         )
-    except ConflictError:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail={"code": AppErrorCode.CONFLICT, "message": "User is already exist"},
-        )
 
+    except ConflictError:
+        raise conflict("User already exists")
     except Exception:
         logger.exception("Unexpected error while registering %s user", data.email)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "code": AppErrorCode.INTERNAL_SERVER_ERROR,
-                "message": "An unexpected error occurred",
-            },
-        )
+        raise internal_server_error()

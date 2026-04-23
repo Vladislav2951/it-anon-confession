@@ -65,7 +65,7 @@ class RoleRepo(BaseRepo, IRoleRepo):
         if not role_models:
             return []
 
-        return [Role.model_validate(el) for el in role_models]
+        return [Role.model_validate(m) for m in role_models]
 
     async def update(self, id: UUID7, update_inp: RoleUpdateInput) -> Role:
         to_update = update_inp.model_dump(exclude_unset=True)
