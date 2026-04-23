@@ -7,7 +7,12 @@ from fastapi import APIRouter, Depends, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import UUID7
 
-from api.http.common_exceptions import forbidden, internal_server_error, not_found
+from api.http.common_exceptions import (
+    conflict,
+    forbidden,
+    internal_server_error,
+    not_found,
+)
 from api.http.dto import UserPublic
 from api.http.middleware import IdentityContextFactory, auth_only
 from api.http.response_models import DataResponse, ErrorResponse, MessageResponse
@@ -15,7 +20,7 @@ from core.config import get_settings
 from core.dependencies import user_srv
 from domain.entities import Permission
 from domain.enums import Action
-from domain.errors import ForbiddenError, NotFoundError
+from domain.errors import ConflictError, ForbiddenError, NotFoundError
 
 
 settings = get_settings()
@@ -129,4 +134,58 @@ async def get_user_permissions(
         raise forbidden()
     except Exception as e:
         logger.exception("Error during fetching user permissions: %s", str(e))
+        raise internal_server_error()
+
+
+@router.post(
+    "/{user_id}/assign-role/{role_id}",
+    summary="Assign role to user",
+    responses={status.HTTP_204_NO_CONTENT: {"description": "Success"}},
+)
+async def assign_role(
+    user_id: UUID7,
+    role_id: UUID7,
+    user_srv: UserService = Depends(user_srv),
+    identity_ctx: IdentityContext = Depends(
+        IdentityContextFactory(business_element_name, Action.UPDATE)
+    ),
+):
+    try:
+        await user_srv.assign_role(user_id, role_id, identity_ctx)
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+    except NotFoundError as e:
+        raise not_found(str(e))
+    except ConflictError as e:
+        raise conflict(str(e))
+    except ForbiddenError:
+        raise forbidden()
+    except Exception as e:
+        logger.exception("Error during assigning role: %s", str(e))
+        raise internal_server_error()
+
+
+@router.post(
+    "/{user_id}/revoke-role/{role_id}",
+    summary="Revoke role from user",
+    responses={status.HTTP_204_NO_CONTENT: {"description": "Success"}},
+)
+async def revoke_role(
+    user_id: UUID7,
+    role_id: UUID7,
+    user_srv: UserService = Depends(user_srv),
+    identity_ctx: IdentityContext = Depends(
+        IdentityContextFactory(business_element_name, Action.UPDATE)
+    ),
+):
+    try:
+        await user_srv.revoke_role(user_id, role_id, identity_ctx)
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+    except NotFoundError as e:
+        raise not_found(str(e))
+    except ForbiddenError:
+        raise forbidden()
+    except Exception as e:
+        logger.exception("Error during revoking role: %s", str(e))
         raise internal_server_error()

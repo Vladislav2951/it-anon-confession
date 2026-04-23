@@ -4,12 +4,13 @@ from datetime import datetime, timezone
 import logging
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import insert, select, update
+from sqlalchemy import delete, insert, select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import noload
 
 from domain.dto import ChangePasswordUserInput, PatchUpdateUserInput
 from domain.entities import Permission, User
-from domain.errors import UpdateError
+from domain.errors import ConflictError, UpdateError
 from domain.interfaces.database import IUserRepo
 from infrastructure.postgres.models import (
     PermissionModel,
@@ -126,10 +127,6 @@ class UserRepo(BaseRepo, IUserRepo):
 
         await self._session.execute(stmt)
 
-    async def assign_role(self, user_id: UUID7, role_id: UUID7):
-        stmt = insert(user_roles).values(user_id=user_id, role_id=role_id)
-        await self._session.execute(stmt)
-
     async def get_permissions(self, user_id: UUID7) -> list[Permission]:
         stmt = (
             select(PermissionModel)
@@ -146,3 +143,16 @@ class UserRepo(BaseRepo, IUserRepo):
         permission_models = result.scalars().all()
 
         return [Permission.model_validate(p) for p in permission_models]
+
+    async def assign_role(self, user_id: UUID7, role_id: UUID7):
+        stmt = insert(user_roles).values(user_id=user_id, role_id=role_id)
+        try:
+            await self._session.execute(stmt)
+        except IntegrityError:
+            raise ConflictError(f"Role {role_id} is already assigned to user {user_id}")
+
+    async def revoke_role(self, user_id: UUID7, role_id: UUID7):
+        stmt = delete(user_roles).where(
+            user_roles.c.user_id == user_id, user_roles.c.role_id == role_id
+        )
+        await self._session.execute(stmt)

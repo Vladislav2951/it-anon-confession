@@ -40,9 +40,13 @@ class IUserRepo(ABC):
         pass
 
     @abstractmethod
+    async def get_permissions(self, user_id: UUID7) -> list[Permission]:
+        pass
+
+    @abstractmethod
     async def assign_role(self, user_id: UUID7, role_id: UUID7):
         pass
 
     @abstractmethod
-    async def get_permissions(self, user_id: UUID7) -> list[Permission]:
+    async def revoke_role(self, user_id: UUID7, role_id: UUID7):
         pass

@@ -157,7 +157,6 @@ async def update(
 @router.delete(
     "/{role_id}",
     summary="Delete role",
-    response_model=MessageResponse,
     responses={status.HTTP_204_NO_CONTENT: {"description": "Success"}},
 )
 async def delete(
@@ -182,7 +181,6 @@ async def delete(
 @router.post(
     "/{role_id}/assign-permission/{permission_id}",
     summary="Assign permission",
-    response_model=MessageResponse,
     responses={status.HTTP_204_NO_CONTENT: {"description": "Success"}},
 )
 async def assign_permission(
@@ -211,7 +209,6 @@ async def assign_permission(
 @router.post(
     "/{role_id}/revoke-permission/{permission_id}",
     summary="Revoke permission",
-    response_model=MessageResponse,
     responses={status.HTTP_204_NO_CONTENT: {"description": "Success"}},
 )
 async def revoke_permission(

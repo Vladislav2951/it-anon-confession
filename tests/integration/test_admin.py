@@ -6,6 +6,7 @@ from uuid_extensions import uuid7  # type: ignore[import-untyped]
 from domain.entities import Permission, Role
 from domain.entities.user import User
 from domain.enums import SystemRole
+from domain.errors import ConflictError
 
 
 @pytest.mark.asyncio
@@ -65,3 +66,95 @@ class TestAdminProtection:
         response = await auth_admin_client.delete(f"/admin/users/{target_user_id}")
 
         assert response.status_code == 204
+
+
+@pytest.mark.asyncio
+class TestAdminUserRoleManagement:
+    @pytest.fixture(autouse=True)
+    def setup_admin_god_mode(self, mock_uow, test_admin):
+        """Настройка полного доступа для админа в каждом тесте."""
+        mock_uow.user_repo.get_one.return_value = test_admin
+        mock_uow.role_repo.get_user_roles.return_value = [
+            Role(id=uuid7(), name=SystemRole.admin.value, is_system=True)
+        ]
+        god_permission = Permission(
+            id=uuid7(),
+            business_element_id=uuid7(),
+            update_all_permission=True,
+            read_all_permission=True,
+        )
+        mock_uow.permission_repo.get_permissions_for_element.return_value = [
+            god_permission
+        ]
+
+    async def test_assign_role_to_user_success(
+        self, auth_admin_client, mock_uow, test_admin
+    ):
+        target_user_id = uuid7()
+        role_id = uuid7()
+
+        # Проверка существования
+        def get_one_side_effect(uid, *args, **kwargs):
+            if uid == test_admin.id:
+                return test_admin
+            return MagicMock()  # Для целевого юзера
+
+        mock_uow.user_repo.get_one.side_effect = get_one_side_effect
+        mock_uow.role_repo.get_one.return_value = MagicMock(spec=Role)
+
+        response = await auth_admin_client.post(
+            f"/admin/users/{target_user_id}/assign-role/{role_id}"
+        )
+
+        assert response.status_code == 204
+        mock_uow.user_repo.assign_role.assert_called_once_with(target_user_id, role_id)
+
+    async def test_assign_role_conflict(self, auth_admin_client, mock_uow, test_admin):
+        target_user_id = uuid7()
+        role_id = uuid7()
+
+        mock_uow.user_repo.get_one.side_effect = lambda uid: (
+            test_admin if uid == test_admin.id else MagicMock()
+        )
+        mock_uow.role_repo.get_one.return_value = MagicMock()
+
+        mock_uow.user_repo.assign_role.side_effect = ConflictError()
+
+        response = await auth_admin_client.post(
+            f"/admin/users/{target_user_id}/assign-role/{role_id}"
+        )
+
+        assert response.status_code == 409
+
+    async def test_revoke_role_success(self, auth_admin_client, mock_uow, test_admin):
+        target_user_id = uuid7()
+        role_id = uuid7()
+
+        mock_uow.user_repo.get_one.side_effect = lambda uid: (
+            test_admin if uid == test_admin.id else MagicMock()
+        )
+        mock_uow.role_repo.get_one.return_value = MagicMock()
+
+        response = await auth_admin_client.post(
+            f"/admin/users/{target_user_id}/revoke-role/{role_id}"
+        )
+
+        assert response.status_code == 204
+        mock_uow.user_repo.revoke_role.assert_called_once_with(target_user_id, role_id)
+
+    async def test_assign_role_user_not_found(
+        self, auth_admin_client, mock_uow, test_admin
+    ):
+        target_user_id = uuid7()
+        role_id = uuid7()
+
+        # User не существует
+        mock_uow.user_repo.get_one.side_effect = lambda uid: (
+            test_admin if uid == test_admin.id else None
+        )
+
+        response = await auth_admin_client.post(
+            f"/admin/users/{target_user_id}/assign-role/{role_id}"
+        )
+
+        assert response.status_code == 404

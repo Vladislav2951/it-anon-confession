@@ -153,3 +153,39 @@ class UserService:
                 raise NotFoundError(f"User {user_id} not found")
 
             return await t.user_repo.get_permissions(user_id)
+
+    async def assign_role(
+        self, user_id: UUID7, role_id: UUID7, identity_ctx: IdentityContext
+    ):
+        await self.access_srv.check_access(
+            identity_ctx.current_user,
+            identity_ctx.business_element_name,
+            identity_ctx.action,
+        )
+
+        async with self._db_transaction_factory() as t:
+            if not await t.user_repo.get_one(user_id):
+                raise NotFoundError(f"User {user_id} not found")
+
+            if not await t.role_repo.get_one(role_id):
+                raise NotFoundError(f"Role {role_id} not found")
+
+            await t.user_repo.assign_role(user_id, role_id)
+
+    async def revoke_role(
+        self, user_id: UUID7, role_id: UUID7, identity_ctx: IdentityContext
+    ):
+        await self.access_srv.check_access(
+            identity_ctx.current_user,
+            identity_ctx.business_element_name,
+            identity_ctx.action,
+        )
+
+        async with self._db_transaction_factory() as t:
+            if not await t.user_repo.get_one(user_id):
+                raise NotFoundError(f"User {user_id} not found")
+
+            if not await t.role_repo.get_one(role_id):
+                raise NotFoundError(f"Role {role_id} not found")
+
+            await t.user_repo.revoke_role(user_id, role_id)
