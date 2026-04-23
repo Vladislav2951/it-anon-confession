@@ -84,30 +84,37 @@ class ConfessionService:
     async def update(
         self, id: UUID7, update_inp: ConfessionUpdateInput, identity_ctx: IdentityContext
     ) -> Confession:
-        await self.access_srv.check_access(
-            identity_ctx.current_user,
-            identity_ctx.business_element_name,
-            identity_ctx.action,
-            identity_ctx.current_user.id if identity_ctx.current_user else None,
-        )
 
         async with self._db_transaction_factory() as t:
             confession = await t.confession_repo.get_one(id)
+            
+            owner_id = confession.user_id if confession else None
+            await self.access_srv.check_access(
+                identity_ctx.current_user,
+                identity_ctx.business_element_name,
+                identity_ctx.action,
+                owner_id,
+            )
+            
             if not confession:
                 raise NotFoundError(f"Confession {id} not found")
 
+            
             return await t.confession_repo.update(id, update_inp)
 
     async def delete(self, id: UUID7, identity_ctx: IdentityContext) -> None:
-        await self.access_srv.check_access(
-            identity_ctx.current_user,
-            identity_ctx.business_element_name,
-            identity_ctx.action,
-            identity_ctx.current_user.id if identity_ctx.current_user else None,
-        )
 
         async with self._db_transaction_factory() as t:
             confession = await t.confession_repo.get_one(id)
+            
+            owner_id = confession.user_id if confession else None
+            await self.access_srv.check_access(
+                identity_ctx.current_user,
+                identity_ctx.business_element_name,
+                identity_ctx.action,
+                owner_id,
+            )
+            
             if not confession:
                 return None
 
