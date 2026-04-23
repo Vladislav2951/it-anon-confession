@@ -41,6 +41,7 @@ async def client(mock_uow_factory) -> AsyncGenerator[AsyncClient, None]:
         AuthService,
         BusinessElementService,
         ConfessionService,
+        PermissionService,
         RoleService,
         SessionService,
         UserService,
@@ -54,6 +55,7 @@ async def client(mock_uow_factory) -> AsyncGenerator[AsyncClient, None]:
     t_role = RoleService(mock_uow_factory, t_access)
     t_conf = ConfessionService(mock_uow_factory, t_access)
     t_be = BusinessElementService(mock_uow_factory, t_access)
+    t_permission = PermissionService(mock_uow_factory, t_access)
 
     # Зависимости в FastAPI
     app.dependency_overrides[dependencies.auth_srv] = lambda: t_auth
@@ -63,6 +65,7 @@ async def client(mock_uow_factory) -> AsyncGenerator[AsyncClient, None]:
     app.dependency_overrides[dependencies.access_srv] = lambda: t_access
     app.dependency_overrides[dependencies.confession_srv] = lambda: t_conf
     app.dependency_overrides[dependencies.business_element_srv] = lambda: t_be
+    app.dependency_overrides[dependencies.permission_srv] = lambda: t_permission
 
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
