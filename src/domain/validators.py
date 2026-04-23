@@ -19,7 +19,11 @@ TitleStr = Annotated[
 NicknameStr = Annotated[
     str,
     StringConstraints(
-        min_length=3, max_length=16, strip_whitespace=True, ascii_only=True
+        min_length=3,
+        max_length=16,
+        strip_whitespace=True,
+        ascii_only=True,
+        pattern=r"^[a-zA-Z0-9_-]+$",
     ),
 ]
 DescriptionStr = Annotated[str, StringConstraints(min_length=3, max_length=250)]
@@ -34,9 +38,3 @@ BodyString = Annotated[
     StringConstraints(min_length=3, max_length=2000, strip_whitespace=True),
 ]
 PasswordStr = Annotated[SecretStr, StringConstraints(min_length=8, max_length=100)]
-PermissionSlug = Annotated[
-    str,
-    StringConstraints(
-        pattern=r"^[a-z0-9]+([.:][a-z0-9]+)*$", min_length=1, max_length=64
-    ),
-]
