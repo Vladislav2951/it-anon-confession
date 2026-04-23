@@ -10,6 +10,7 @@ class AppErrorCode(str, Enum):
     FORBIDDEN = "FORBIDDEN"
     NOT_FOUND = "NOT_FOUND"
     UNAUTHORIZED = "UNAUTHORIZED"
+    UNPROCESSABLE = "UNPROCESSABLE"
 
 
 class AppError(Exception):
@@ -45,5 +46,10 @@ class ConflictError(AppError):
 
 
 class UpdateError(AppError):
+    def __init__(self, message: Optional[str] = None):
+        super().__init__(message, code=AppErrorCode.BAD_REQUEST)
+
+
+class Unprocessable(AppError):
     def __init__(self, message: Optional[str] = None):
         super().__init__(message, code=AppErrorCode.BAD_REQUEST)
