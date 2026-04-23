@@ -49,7 +49,7 @@ class TestAccessServiceUnit:
             is False
         )
 
-        # Разрешено чтение своего, запрашиваем свое
+        # Разрешено чтение только своего, запрашиваем свое
         assert (
             service._is_allowed(
                 permissions=[perm_read_own],

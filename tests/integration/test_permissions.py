@@ -75,7 +75,7 @@ class TestPermissionAdmin:
 
 @pytest.mark.asyncio
 class TestPermissionSecurity:
-    """Группа тестов для проверки ограничений доступа к эндпоинтам прав."""
+    """Группа тестов для проверки ограничений доступа к permissions."""
 
     async def test_user_cannot_access_permissions_list(
         self, auth_user_client, mock_uow, test_user
