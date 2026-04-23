@@ -184,8 +184,8 @@ async def revoke_role(
 
     except NotFoundError as e:
         raise not_found(str(e))
-    except ForbiddenError:
-        raise forbidden()
+    except ForbiddenError as e:
+        raise forbidden(str(e))
     except Exception as e:
         logger.exception("Error during revoking role: %s", str(e))
         raise internal_server_error()

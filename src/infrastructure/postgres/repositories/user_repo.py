@@ -23,14 +23,12 @@ from infrastructure.postgres.repositories.base import BaseRepo
 
 
 if TYPE_CHECKING:
+    from pydantic import UUID7, EmailStr
+
     from domain.interfaces.database.filters import UserFilter
 
 
 logger = logging.getLogger(__name__)
-
-
-if TYPE_CHECKING:
-    from pydantic import UUID7, EmailStr
 
 
 class UserRepo(BaseRepo, IUserRepo):

@@ -8,7 +8,9 @@ from pydantic import SecretStr
 from core.security import get_password_hash, verify_password
 from domain.dto import ChangePasswordUserInput, PatchUpdateUserInput
 from domain.entities import User
-from domain.errors import BadLoginError, NotFoundError
+from domain.enums.system_roles import SystemRole
+from domain.errors import BadLoginError, ForbiddenError, NotFoundError
+from domain.interfaces.database.filters import UserFilter
 from domain.validators import PasswordStr
 
 
@@ -184,8 +186,21 @@ class UserService:
         async with self._db_transaction_factory() as t:
             if not await t.user_repo.get_one(user_id):
                 raise NotFoundError(f"User {user_id} not found")
-
-            if not await t.role_repo.get_one(role_id):
+            role = await t.role_repo.get_one(role_id)
+            if not role:
                 raise NotFoundError(f"Role {role_id} not found")
+
+            # Запрет на снятие последнего админа
+            if role.name == SystemRole.admin.value:
+                admins = await t.user_repo.get_all(
+                    UserFilter(roles=[SystemRole.admin.value])
+                )
+
+                # Если админ всего один
+                if len(admins) == 1:
+                    if admins[0].id == user_id:
+                        raise ForbiddenError(
+                            "Cannot remove the last administrator role from the system"
+                        )
 
             await t.user_repo.revoke_role(user_id, role_id)
