@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional, Self
+from typing import Optional, Self
 
 from pydantic import ConfigDict, EmailStr, SecretStr
 from uuid_extensions import uuid7  # type: ignore[import-untyped]

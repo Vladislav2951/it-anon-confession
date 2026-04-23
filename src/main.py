@@ -1,4 +1,3 @@
-from contextlib import asynccontextmanager
 import logging
 
 from fastapi import FastAPI
@@ -15,14 +14,7 @@ setup_logging(settings.LOG_LEVEL)
 logger = logging.getLogger(__name__)
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # TODO check db connection
-
-    yield
-
-
-app = FastAPI(title="it-anon-confession", version=settings.VERSION, lifespan=lifespan)
+app = FastAPI(title="it-anon-confession", version=settings.VERSION)
 
 
 if settings.CORS_ORIGINS:
@@ -35,9 +27,6 @@ if settings.CORS_ORIGINS:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
-# Переопределение обработчика HTTP ошибок
-# app.add_exception_handler(HTTPException, http_exception_handler)
 
 
 @app.get("/")

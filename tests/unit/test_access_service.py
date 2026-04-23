@@ -1,6 +1,3 @@
-from unittest.mock import MagicMock
-import uuid
-
 import pytest
 from uuid_extensions import uuid7  # type: ignore[import-untyped]
 
