@@ -9,24 +9,33 @@ from domain.enums import SystemRole
 
 @pytest.mark.asyncio
 class TestRolePermissionManagement:
-    async def test_assign_permission_to_role_success(
-        self, auth_admin_client, mock_uow, test_admin
-    ):
+    @pytest.fixture(autouse=True)
+    def setup_admin_access(self, mock_uow, test_admin):
+        """Настройка админа для каждого теста в классе."""
+        mock_uow.user_repo.get_one.return_value = test_admin
+        mock_uow.role_repo.get_user_roles.return_value = [
+            Role(id=uuid7(), name=SystemRole.admin.value, is_system=True)
+        ]
+
+        permission = Permission(
+            id=uuid7(),
+            business_element_id=uuid7(),
+            read_all_permission=True,
+            update_all_permission=True,
+            delete_all_permission=True,
+            create_permission=True,
+        )
+        mock_uow.permission_repo.get_permissions_for_element.return_value = [permission]
+
+    async def test_assign_permission_to_role_success(self, auth_admin_client, mock_uow):
         role_id = uuid7()
         perm_id = uuid7()
 
         # Настройка моков для middleware и проверки существования
-        mock_uow.user_repo.get_one.return_value = test_admin
-        mock_uow.role_repo.get_one.return_value = MagicMock(spec=Role)
         mock_uow.permission_repo.get_one.return_value = MagicMock(spec=Permission)
 
         # Права доступа админа
         mock_uow.role_repo.get_user_roles.return_value = [Role(id=uuid7(), name="admin")]
-        mock_uow.permission_repo.get_permissions_for_element.return_value = [
-            Permission(
-                id=uuid7(), business_element_id=uuid7(), update_all_permission=True
-            )
-        ]
 
         response = await auth_admin_client.post(
             f"/admin/roles/{role_id}/assign-permission/{perm_id}"
@@ -40,20 +49,6 @@ class TestRolePermissionManagement:
     ):
         role_id = uuid7()
         perm_id = uuid7()
-
-        admin_role = Role(id=uuid7(), name=SystemRole.admin.value, is_system=True)
-        mock_uow.role_repo.get_user_roles.return_value = [admin_role]
-
-        # Разрешение для _is_allowed
-        permission = Permission(
-            id=uuid7(),
-            business_element_id=uuid7(),
-            read_all_permission=True,
-            update_all_permission=True,
-            delete_all_permission=True,
-            create_permission=True,
-        )
-        mock_uow.permission_repo.get_permissions_for_element.return_value = [permission]
 
         mock_uow.user_repo.get_one.return_value = test_admin
 
@@ -81,20 +76,6 @@ class TestRolePermissionManagement:
     ):
         role_id = uuid7()
         perm_id = uuid7()
-
-        admin_role = Role(id=uuid7(), name=SystemRole.admin.value, is_system=True)
-        mock_uow.role_repo.get_user_roles.return_value = [admin_role]
-
-        # Разрешение для _is_allowed
-        permission = Permission(
-            id=uuid7(),
-            business_element_id=uuid7(),
-            read_all_permission=True,
-            update_all_permission=True,
-            delete_all_permission=True,
-            create_permission=True,
-        )
-        mock_uow.permission_repo.get_permissions_for_element.return_value = [permission]
 
         mock_uow.user_repo.get_one.return_value = test_admin
 
