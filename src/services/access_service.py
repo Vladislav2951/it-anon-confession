@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING, Optional
 
 from domain.enums import Action, SystemRole
@@ -17,9 +16,11 @@ if TYPE_CHECKING:
 
 class AccessService:
     """
-    Access rights verification service.
+    Сервис проверки прав доступа.
 
-    Implements authorization logic based on RBAC (Role-Based Access Control).
+    Реализует логику авторизации на основе RBAC (Role-Based Access Control).
+    Проверяет наличие необходимых разрешений (Permissions) у пользователя
+    для выполнения действий над бизнес-элементами.
     """
 
     def __init__(self, db_transaction_factory: IDatabaseTransactionFactory):
@@ -33,30 +34,21 @@ class AccessService:
         resource_owner_id: Optional[UUID7] = None,
     ) -> None:
         """
-        1. Check user authentication and activity
-        2. Get all user roles
-        3. If no roles exist, access is denied
-        4. Get access rules for roles and resources
-        5. Check if at least one rule grants access
-        6. If access is denied, an exception is thrown
+        Проверяет, имеет ли пользователь право на выполнение указанного действия.
 
-        Args:
-            user: Current user
-            business_element_name: Business element name
-            action: Action to perform
-            resource_owner_id: Resource owner ID (for checking access to their resources)
+        Метод выполняет последовательную проверку:
+        1. Наличие активного пользователя.
+        2. Получение всех ролей и связанных с ними разрешений для конкретного бизнес-элемента.
+        3. Проверка специфических правил (доступ ко всем объектам или только к своим).
+        4. Запрет на удаление последнего администратора в системе.
 
-        Raises:
-            UnauthorizedError: User is not authenticated or inactive
-            ForbiddenError: Insufficient rights (no roles or permissions)
+        :param user: Объект текущего пользователя.
+        :param business_element_name: Имя бизнес-элемента (например, 'users', 'confessions').
+        :param action: Тип действия (CREATE, READ, UPDATE, DELETE).
+        :param resource_owner_id: ID владельца ресурса (необязательно, используется для проверки доступа к своим записям).
 
-        Example:
-        await access_service.check_access(
-            user=current_user,
-            business_element_name="users",
-            action=Action.UPDATE,
-            resource_owner_id=user.id
-        )
+        :raises ForbiddenError: Если у пользователя недостаточно прав или действие нарушает системные правила.
+        :raises RuntimeError: Если вызов произведен некорректно (для неактивного пользователя).
         """
 
         if business_element_name == "__system__":
@@ -106,25 +98,6 @@ class AccessService:
         action: Action,
         resource_owner_id: UUID7 | None,
     ) -> bool:
-        """
-        Checks whether an action based on rules is allowed.
-
-        Validation logic:
-            1. Rules are processed sequentially (OR logic)
-            2. If there is a rule with access to all resources (read_all, update_all, delete_all), access is allowed
-            3. If there is a rule with access to its own resources (read, update, delete):
-                - For CREATE: access is always allowed
-                - For other actions: resource_owner_id must match user_id
-
-        Args:
-            rules: List of access rules for user roles
-            user_id: ID of the current user
-            action: Action to perform
-            resource_owner_id: ID of the resource owner (None for creation)
-
-        Returns:
-            bool: True if access is allowed, False otherwise
-        """
         own_permission_map = {
             Action.READ: "read_permission",
             Action.CREATE: "create_permission",

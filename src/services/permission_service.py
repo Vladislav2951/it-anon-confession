@@ -19,6 +19,10 @@ if TYPE_CHECKING:
 
 
 class PermissionService:
+    """
+    Сервис для просмотра доступных в системе прав доступа.
+    """
+
     def __init__(
         self,
         db_transaction_factory: IDatabaseTransactionFactory,

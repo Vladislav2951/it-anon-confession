@@ -19,6 +19,10 @@ if TYPE_CHECKING:
 
 
 class ConfessionService:
+    """
+    Сервис управления признаниями.
+    """
+
     def __init__(
         self,
         db_transaction_factory: IDatabaseTransactionFactory,

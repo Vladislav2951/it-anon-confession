@@ -26,6 +26,13 @@ logger = logging.getLogger(__name__)
 
 
 class UserService:
+    """
+    Сервис управления пользователями.
+
+    Отвечает за бизнес-логику работы с аккаунтами: поиск, обновление данных,
+    смену паролей, управление ролями и "мягкое" удаление.
+    """
+
     def __init__(
         self,
         db_transaction_factory: IDatabaseTransactionFactory,

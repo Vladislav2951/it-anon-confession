@@ -20,6 +20,10 @@ if TYPE_CHECKING:
 
 
 class RoleService:
+    """
+    Сервис управления ролями и их связями с разрешениями.
+    """
+
     def __init__(
         self,
         db_transaction_factory: IDatabaseTransactionFactory,

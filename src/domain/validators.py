@@ -1,3 +1,10 @@
+"""
+Модуль валидаторов данных.
+
+Использует Annotated и Pydantic для декларативной проверки строк,
+а также библиотеку nh3 для очистки строк от нежелательного HTML-кода (XSS protection).
+"""
+
 from typing import Annotated
 
 import nh3

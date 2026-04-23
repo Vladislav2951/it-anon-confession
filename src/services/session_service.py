@@ -17,6 +17,10 @@ if TYPE_CHECKING:
 
 
 class SessionService:
+    """
+    Сервис управления сессиями.
+    """
+
     def __init__(self, db_transaction_factory: IDatabaseTransactionFactory):
         self._db_transaction_factory = db_transaction_factory
 

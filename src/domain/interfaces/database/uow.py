@@ -16,6 +16,13 @@ if TYPE_CHECKING:
 
 
 class IDatabaseTransactionUoW(ABC):
+    """
+    Интерфейс паттерна Unit of Work для работы с базой данных.
+
+    Обеспечивает атомарность операций (транзакционность) и предоставляет
+    доступ ко всем репозиториям системы в рамках одной транзакции.
+    """
+
     @abstractmethod
     async def __aenter__(self) -> Self:
         pass

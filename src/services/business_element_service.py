@@ -18,6 +18,10 @@ logger = logging.getLogger(__name__)
 
 
 class BusinessElementService:
+    """
+    Сервис управления бизнес-элементами (контекстами прав доступа).
+    """
+
     def __init__(
         self,
         db_transaction_factory: IDatabaseTransactionFactory,

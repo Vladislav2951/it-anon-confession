@@ -20,6 +20,11 @@ if TYPE_CHECKING:
 
 
 class AuthService:
+    """
+    Сервис аутентификации и регистрации.
+    Отвечает за проверку учетных данных и создание новых аккаунтов.
+    """
+
     def __init__(self, db_transaction_factory: IDatabaseTransactionFactory):
         self._db_transaction_factory = db_transaction_factory
 
