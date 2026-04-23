@@ -16,39 +16,38 @@ services:
       retries: 5
     restart: unless-stopped
 
-  # it-anon-confession:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   image: it-anon-confession:0.1.0 # TODO autodetect version
-  #   pull_policy: never
-  #   container_name: it-anon-confession
-  #   ports:
-  #     - "${PORT:-8000}:8000" # FastAPI app port
-  #   environment:
-  #     # Common environment variables
-  #     PYTHONUNBUFFERED: 1
-  #     PYTHONDONTWRITEBYTECODE: 1
-  #     PYTHONPATH: /app/src/
+  it-anon-confession:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: it-anon-confession:0.1.0
+    pull_policy: never
+    container_name: it-anon-confession
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      # Common environment variables
+      PYTHONUNBUFFERED: 1
+      PYTHONDONTWRITEBYTECODE: 1
+      PYTHONPATH: /app/src/
 
-  #     SESSION_DURATION_DAYS: ${SESSION_DURATION_DAYS}
-  #     DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD}
-  #     LOG_LEVEL: ${LOG_LEVEL:-INFO}
-  #     ENV: ${ENV:-prod}
+      SESSION_DURATION_DAYS: ${SESSION_DURATION_DAYS}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      ENV: ${ENV:-prod}
 
-  #     CORS_ORIGINS: ${CORS_ORIGINS:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
 
-  #     # Postgres connection
-  #     DB_HOST: ${DB_HOST:-postgres} # Service name in docker-compose network
-  #     DB_PORT: ${DB_PORT:-5432}
-  #     DB_NAME: ${DB_NAME:-postgres}
-  #     DB_USERNAME: ${DB_USERNAME:-postgres}
-  #     DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      # Postgres connection
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-postgres}
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
 
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   psql-data:
