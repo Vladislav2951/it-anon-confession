@@ -43,7 +43,7 @@
 2. Запустите проект:
 
     ```bash
-    docker-compose up --d
+    docker-compose up -d
     ```
 
 3. API будет доступно по адресу: `http://localhost:8000`
