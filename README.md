@@ -43,7 +43,7 @@
 2. Запустите проект:
 
     ```bash
-    docker-compose up --build
+    docker-compose up --d
     ```
 
 3. API будет доступно по адресу: `http://localhost:8000`
@@ -187,7 +187,7 @@
 │   │       ├── response_models.py    # Модели ответов API
 │   │       └── routes.py             # Регистрация маршрутов
 │   ├── core                 # Общие настройки и инфраструктурные зависимости
-│   │   ├── config.py        # Конфигурация приложения (env, settings)
+│   │   ├── config.py        # Конфигурация приложения
 │   │   ├── dependencies.py  # DI
 │   │   └── security.py      # Утилиты безопасности
 │   ├── domain               # Домен
@@ -209,7 +209,7 @@
 │   │       └── uow.py        # Реализация Unit of Work
 │   ├── libs                  # Вспомогательные библиотеки
 │   │   └── logger/           # Кастомный логгер
-│   ├── main.py               # Точка входа приложения
+│   ├── main.py               # Точка входа
 │   ├── migrations/           # Миграции (Alembic)
 │   └── services/             # Use cases / бизнес-логика
 └── tests/                    # Тесты
