@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from domain.entities import Permission
 from domain.interfaces.database import IPermissionRepo
@@ -23,13 +24,26 @@ if TYPE_CHECKING:
 
 
 class PermissionRepo(BaseRepo, IPermissionRepo):
-    async def get_all(self) -> list[Permission]:
-        stmt = select(PermissionModel)
-        result = await self._session.execute(stmt)
-        logger.debug("Execute: %s", stmt)
-        permission_models = result.scalars().unique().all()
+    async def get_all(
+        self, limit: Optional[int] = None, offset: Optional[int] = None
+    ) -> tuple[list[Permission], int]:
+        stmt = select(PermissionModel).limit(limit).offset(offset)
+        count_stmt = select(func.count()).select_from(PermissionModel)
 
-        return [self._to_entity(m) for m in permission_models]
+        async with asyncio.TaskGroup() as tg:
+            result_task = tg.create_task(self._session.execute(stmt))
+            total_result_task = tg.create_task(self._session.execute(count_stmt))
+
+        result = result_task.result()
+        total_result = total_result_task.result()
+
+        permission_models = result.scalars().unique().all()
+        if not permission_models:
+            return [], 0
+
+        total = total_result.scalar_one()
+
+        return [self._to_entity(m) for m in permission_models], total
 
     async def get_one(self, id: UUID7) -> Optional[Permission]:
         stmt = select(PermissionModel).where(PermissionModel.id == id)

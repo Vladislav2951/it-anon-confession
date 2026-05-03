@@ -26,7 +26,9 @@ class IRoleRepo(ABC):
         pass
 
     @abstractmethod
-    async def get_all(self) -> list[Role]:
+    async def get_all(
+        self, limit: Optional[int] = None, offset: Optional[int] = None
+    ) -> tuple[list[Role], int]:
         pass
 
     @abstractmethod

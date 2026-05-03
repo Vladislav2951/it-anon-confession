@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from domain.errors import NotFoundError
 
@@ -45,7 +45,9 @@ class PermissionService:
 
             return permission
 
-    async def get_all(self, identity_ctx: IdentityContext) -> list[Permission]:
+    async def get_all(
+        self, identity_ctx: IdentityContext, limit: int = 20, offset: Optional[int] = None
+    ) -> tuple[list[Permission], int]:
         await self.access_srv.check_access(
             identity_ctx.current_user,
             identity_ctx.business_element_name,
@@ -53,4 +55,4 @@ class PermissionService:
         )
 
         async with self._db_transaction_factory() as t:
-            return await t.permission_repo.get_all()
+            return await t.permission_repo.get_all(limit, offset)

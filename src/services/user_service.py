@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from pydantic import SecretStr
 
@@ -74,7 +74,9 @@ class UserService:
 
             return user
 
-    async def get_all(self, identity_ctx: IdentityContext) -> list[User]:
+    async def get_all(
+        self, identity_ctx: IdentityContext, limit: int = 20, offset: Optional[int] = None
+    ) -> tuple[list[User], int]:
         await self.access_srv.check_access(
             identity_ctx.current_user,
             identity_ctx.business_element_name,

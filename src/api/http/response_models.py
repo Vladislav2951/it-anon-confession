@@ -27,13 +27,14 @@ class DataResponse(BaseModel, Generic[T]):
 class Meta(BaseModel):
     page: int
     size: int
-    total: int
+    total_items: int
 
     @computed_field  # type: ignore[prop-decorator]
+    @property
     def total_pages(self) -> int:
-        if self.total == 0:
+        if self.total_items == 0:
             return 0
-        return ceil(self.total / self.size)
+        return ceil(self.total_items / self.size)
 
 
 class DataManyResponse(BaseModel, Generic[T]):

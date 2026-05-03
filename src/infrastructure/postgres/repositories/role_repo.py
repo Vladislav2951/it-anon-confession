@@ -1,13 +1,14 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import delete, insert, select, update
+from sqlalchemy import delete, func, insert, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import noload
 
-from domain.dto import RoleCreateInput, RoleUpdateInput
+from domain.dto import RoleUpdateInput
 from domain.entities import Role
 from domain.errors import ConflictError, UpdateError
 from domain.interfaces.database import IRoleRepo
@@ -56,16 +57,26 @@ class RoleRepo(BaseRepo, IRoleRepo):
 
         return Role.model_validate(role_model)
 
-    async def get_all(self) -> list[Role]:
-        stmt = select(RoleModel)
+    async def get_all(
+        self, limit: Optional[int] = None, offset: Optional[int] = None
+    ) -> tuple[list[Role], int]:
+        stmt = select(RoleModel).limit(limit).offset(offset)
+        count_stmt = select(func.count()).select_from(RoleModel)
 
-        result = await self._session.execute(stmt)
+        async with asyncio.TaskGroup() as tg:
+            result_task = tg.create_task(self._session.execute(stmt))
+            total_result_task = tg.create_task(self._session.execute(count_stmt))
+
+        result = result_task.result()
+        total_result = total_result_task.result()
+
         role_models = result.scalars().unique().all()
-
         if not role_models:
-            return []
+            return [], 0
 
-        return [Role.model_validate(m) for m in role_models]
+        total = total_result.scalar_one()
+
+        return [Role.model_validate(m) for m in role_models], total
 
     async def update(self, id: UUID7, update_inp: RoleUpdateInput) -> Role:
         to_update = update_inp.model_dump(exclude_unset=True)

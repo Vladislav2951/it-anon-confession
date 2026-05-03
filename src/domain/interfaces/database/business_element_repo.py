@@ -21,5 +21,7 @@ class IBusinessElementRepo(ABC):
         pass
 
     @abstractmethod
-    async def get_all(self) -> list[BusinessElement]:
+    async def get_all(
+        self, limit: Optional[int] = None, offset: Optional[int] = None
+    ) -> tuple[list[BusinessElement], int]:
         pass

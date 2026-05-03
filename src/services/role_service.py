@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from domain.entities import Role
 from domain.errors import ConflictError, ForbiddenError, NotFoundError
@@ -78,7 +78,9 @@ class RoleService:
 
             return role
 
-    async def get_all(self, identity_ctx: IdentityContext) -> list[Role]:
+    async def get_all(
+        self, identity_ctx: IdentityContext, limit: int = 20, offset: Optional[int] = None
+    ) -> tuple[list[Role], int]:
         await self.access_srv.check_access(
             identity_ctx.current_user,
             identity_ctx.business_element_name,
@@ -86,7 +88,7 @@ class RoleService:
         )
 
         async with self._db_transaction_factory() as t:
-            return await t.role_repo.get_all()
+            return await t.role_repo.get_all(limit, offset)
 
     async def update(
         self, id: UUID7, update_inp: RoleUpdateInput, identity_ctx: IdentityContext

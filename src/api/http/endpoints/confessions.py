@@ -1,19 +1,23 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Query, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import UUID7
 
 from api.http.common_exceptions import forbidden, internal_server_error, not_found
-from api.http.dto import ConfessionCreateDTO, ConfessionPublic, ConfessionUpdateDTO
+from api.http.dto import (
+    ConfessionCreateDTO,
+    ConfessionPublic,
+    ConfessionUpdateDTO,
+    PaginationDTO,
+)
 from api.http.middleware import IdentityContextFactory, auth_only
-from api.http.response_models import DataResponse, ErrorResponse, MessageResponse
+from api.http.response_models import DataManyResponse, DataResponse, ErrorResponse, Meta
 from core.config import get_settings
 from core.dependencies import confession_srv
-from domain.entities import Confession
 from domain.enums import Action
 from domain.errors import ForbiddenError, NotFoundError
 
@@ -107,24 +111,30 @@ async def get_one(
 @router.get(
     "/",
     summary="Get all confessions",
-    response_model=DataResponse[list[ConfessionPublic]],
+    response_model=DataManyResponse[ConfessionPublic],
     responses={status.HTTP_200_OK: {"description": "Success"}},
 )
 async def get_all(
+    pagination: Annotated[PaginationDTO, Query()],
     confession_srv: ConfessionService = Depends(confession_srv),
     identity_ctx: IdentityContext = Depends(
         IdentityContextFactory(business_element_name, Action.READ)
     ),
 ):
     try:
-        confessions = await confession_srv.get_all(identity_ctx)
+        confessions, total = await confession_srv.get_all(
+            identity_ctx, pagination.limit, pagination.offset
+        )
+
         data = [
             ConfessionPublic.model_validate(c, from_attributes=True).model_dump(
                 mode="json"
             )
             for c in confessions
         ]
-        return JSONResponse({"data": data})
+        meta = Meta(page=pagination.page, size=pagination.size, total_items=total)
+
+        return {"data": data, "meta": meta}
 
     except ForbiddenError:
         raise forbidden()

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Query, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import UUID7
 
@@ -13,9 +13,15 @@ from api.http.common_exceptions import (
     internal_server_error,
     not_found,
 )
-from api.http.dto import UserPublic
+from api.http.dto import PaginationDTO, UserPublic
 from api.http.middleware import IdentityContextFactory, auth_only
-from api.http.response_models import DataResponse, ErrorResponse, MessageResponse
+from api.http.response_models import (
+    DataManyResponse,
+    DataResponse,
+    ErrorResponse,
+    MessageResponse,
+    Meta,
+)
 from core.config import get_settings
 from core.dependencies import user_srv
 from domain.entities import Permission
@@ -50,23 +56,28 @@ business_element_name = "admin"
 @router.get(
     "/",
     summary="Get users",
-    response_model=DataResponse[UserPublic],
+    response_model=DataManyResponse[UserPublic],
     responses={status.HTTP_200_OK: {"description": "Success"}},
 )
 async def get_all(
+    pagination: Annotated[PaginationDTO, Query()],
     user_srv: UserService = Depends(user_srv),
     identity_ctx: IdentityContext = Depends(
         IdentityContextFactory(business_element_name, Action.READ)
     ),
 ):
     try:
-        users = await user_srv.get_all(identity_ctx)
-        users_response = [
+        users, total = await user_srv.get_all(
+            identity_ctx, pagination.limit, pagination.offset
+        )
+
+        data = [
             UserPublic.model_validate(u, from_attributes=True).model_dump(mode="json")
             for u in users
         ]
+        meta = Meta(page=pagination.page, size=pagination.size, total_items=total)
 
-        return JSONResponse({"data": users_response})
+        return {"data": data, "meta": meta}
 
     except ForbiddenError:
         raise forbidden()

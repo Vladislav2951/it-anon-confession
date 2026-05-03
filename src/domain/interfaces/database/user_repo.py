@@ -26,7 +26,12 @@ class IUserRepo(ABC):
         pass
 
     @abstractmethod
-    async def get_all(self, filter: Optional[UserFilter] = None) -> list[User]:
+    async def get_all(
+        self,
+        filter: Optional[UserFilter] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+    ) -> tuple[list[User], int]:
         pass
 
     @abstractmethod

@@ -21,7 +21,9 @@ class IConfessionRepo(ABC):
         pass
 
     @abstractmethod
-    async def get_all(self) -> list[Confession]:
+    async def get_all(
+        self, limit: Optional[int] = None, offset: Optional[int] = None
+    ) -> tuple[list[Confession], int]:
         pass
 
     @abstractmethod

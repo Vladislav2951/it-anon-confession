@@ -1,15 +1,16 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.responses import JSONResponse
 from pydantic import UUID7
 
 from api.http.common_exceptions import forbidden, internal_server_error, not_found
+from api.http.dto import PaginationDTO
 from api.http.middleware import IdentityContextFactory, auth_only
-from api.http.response_models import DataResponse, ErrorResponse
+from api.http.response_models import DataManyResponse, DataResponse, ErrorResponse, Meta
 from core.config import get_settings
 from core.dependencies import business_element_srv
 from domain.entities import BusinessElement
@@ -37,7 +38,6 @@ router = APIRouter(
     },
 )
 
-# Для доступа к этим методам у пользователя должно быть право READ на элемент "admin"
 business_element_name = "admin"
 
 
@@ -73,20 +73,25 @@ async def get_one(
 @router.get(
     "/",
     summary="Get all business elements",
-    response_model=DataResponse[list[BusinessElement]],
+    response_model=DataManyResponse[BusinessElement],
     responses={status.HTTP_200_OK: {"description": "Success"}},
 )
 async def get_all(
+    pagination: Annotated[PaginationDTO, Query()],
     be_srv: BusinessElementService = Depends(business_element_srv),
     identity_ctx: IdentityContext = Depends(
         IdentityContextFactory(business_element_name, Action.READ)
     ),
 ):
     try:
-        elements = await be_srv.get_all(identity_ctx)
-        data = [el.model_dump(mode="json") for el in elements]
+        elements, total = await be_srv.get_all(
+            identity_ctx, pagination.limit, pagination.offset
+        )
 
-        return JSONResponse({"data": data})
+        data = [el.model_dump(mode="json") for el in elements]
+        meta = Meta(page=pagination.page, size=pagination.size, total_items=total)
+
+        return {"data": data, "meta": meta}
 
     except ForbiddenError:
         raise forbidden()

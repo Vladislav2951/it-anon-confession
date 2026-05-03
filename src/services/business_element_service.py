@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from domain.errors import NotFoundError
 
@@ -44,7 +44,9 @@ class BusinessElementService:
 
             return business_element
 
-    async def get_all(self, identity_ctx: IdentityContext) -> list[BusinessElement]:
+    async def get_all(
+        self, identity_ctx: IdentityContext, limit: int = 20, offset: Optional[int] = None
+    ) -> tuple[list[BusinessElement], int]:
         await self.access_srv.check_access(
             identity_ctx.current_user,
             identity_ctx.business_element_name,
@@ -52,4 +54,4 @@ class BusinessElementService:
         )
 
         async with self._db_transaction_factory() as t:
-            return await t.business_element_repo.get_all()
+            return await t.business_element_repo.get_all(limit, offset)

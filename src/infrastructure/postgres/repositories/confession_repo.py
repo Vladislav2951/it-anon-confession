@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, func, select, update
 
 from domain.entities import Confession
 from domain.errors import UpdateError
@@ -48,16 +49,31 @@ class ConfessionRepo(BaseRepo, IConfessionRepo):
 
         return Confession.model_validate(model)
 
-    async def get_all(self) -> list[Confession]:
-        stmt = select(ConfessionModel).order_by(ConfessionModel.created_at.desc())
+    async def get_all(
+        self, limit: Optional[int] = None, offset: Optional[int] = None
+    ) -> tuple[list[Confession], int]:
+        stmt = (
+            select(ConfessionModel)
+            .order_by(ConfessionModel.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        count_stmt = select(func.count()).select_from(ConfessionModel)
 
-        result = await self._session.execute(stmt)
-        models = result.scalars().unique().all()
+        async with asyncio.TaskGroup() as tg:
+            result_task = tg.create_task(self._session.execute(stmt))
+            total_result_task = tg.create_task(self._session.execute(count_stmt))
 
+        result = result_task.result()
+        total_result = total_result_task.result()
+
+        models = result.scalars().all()
         if not models:
-            return []
+            return [], 0
 
-        return [Confession.model_validate(el) for el in models]
+        total = total_result.scalar_one()
+
+        return [Confession.model_validate(el) for el in models], total
 
     async def update(self, id: UUID7, update_inp: ConfessionUpdateInput) -> Confession:
         to_update = update_inp.model_dump(exclude_unset=True)

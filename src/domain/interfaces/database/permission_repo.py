@@ -16,7 +16,9 @@ class IPermissionRepo(ABC):
         pass
 
     @abstractmethod
-    async def get_all(self) -> list[Permission]:
+    async def get_all(
+        self, limit: Optional[int] = None, offset: Optional[int] = None
+    ) -> tuple[list[Permission], int]:
         pass
 
     @abstractmethod

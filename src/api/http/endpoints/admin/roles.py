@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Query, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import UUID7
 
@@ -13,9 +13,9 @@ from api.http.common_exceptions import (
     internal_server_error,
     not_found,
 )
-from api.http.dto import RoleCreateDTO, RoleUpdateDTO
+from api.http.dto import PaginationDTO, RoleCreateDTO, RoleUpdateDTO
 from api.http.middleware import IdentityContextFactory, auth_only
-from api.http.response_models import DataResponse, ErrorResponse, MessageResponse
+from api.http.response_models import DataManyResponse, DataResponse, ErrorResponse, Meta
 from core.config import get_settings
 from core.dependencies import role_srv
 from domain.entities import Role
@@ -103,20 +103,25 @@ async def get_one(
 @router.get(
     "/",
     summary="Get roles",
-    response_model=DataResponse[list[Role]],
+    response_model=DataManyResponse[Role],
     responses={status.HTTP_200_OK: {"description": "Success"}},
 )
 async def get_all(
+    pagination: Annotated[PaginationDTO, Query()],
     role_srv: RoleService = Depends(role_srv),
     identity_ctx: IdentityContext = Depends(
         IdentityContextFactory(business_element_name, Action.READ)
     ),
 ):
     try:
-        roles = await role_srv.get_all(identity_ctx)
-        roles_response = [u.model_dump(mode="json") for u in roles]
+        roles, total = await role_srv.get_all(
+            identity_ctx, pagination.limit, pagination.offset
+        )
 
-        return JSONResponse({"data": roles_response})
+        data = [u.model_dump(mode="json") for u in roles]
+        meta = Meta(page=pagination.page, size=pagination.size, total_items=total)
+
+        return {"data": data, "meta": meta}
 
     except ForbiddenError:
         raise forbidden()

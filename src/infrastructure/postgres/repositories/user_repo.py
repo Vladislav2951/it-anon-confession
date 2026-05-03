@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime, timezone
 import logging
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import delete, insert, select, update
+from sqlalchemy import delete, func, insert, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import noload
 
@@ -73,23 +74,38 @@ class UserRepo(BaseRepo, IUserRepo):
 
         return User.model_validate(user_model)
 
-    async def get_all(self, filter: Optional[UserFilter] = None) -> list[User]:
+    async def get_all(
+        self,
+        filter: Optional[UserFilter] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+    ) -> tuple[list[User], int]:
         stmt = select(UserModel).where(UserModel.deleted_at.is_(None))
 
         if filter and filter.roles:
             stmt = stmt.join(UserModel.roles).where(RoleModel.name.in_(filter.roles))
 
-        result = await self._session.execute(stmt)
+        count_stmt = select(func.count(func.distinct(UserModel.id))).select_from(
+            stmt.subquery()
+        )
+        logger.debug("Execute: %s", count_stmt)
+
+        stmt = stmt.limit(limit).offset(offset)
+
+        async with asyncio.TaskGroup() as tg:
+            result_task = tg.create_task(self._session.execute(stmt))
+            total_result_task = tg.create_task(self._session.execute(count_stmt))
+
+        result = result_task.result()
+        total_result = total_result_task.result()
 
         user_models = result.scalars().unique().all()
         if not user_models:
-            return []
+            return [], 0
 
-        users: list[User] = []
-        for el in user_models:
-            users.append(User.model_validate(el))
+        total = total_result.scalar_one()
 
-        return users
+        return [User.model_validate(el) for el in user_models], total
 
     async def update(
         self, id: UUID7, update_inp: ChangePasswordUserInput | PatchUpdateUserInput
