@@ -5,11 +5,11 @@ from pathlib import Path
 import tomllib
 from typing import Literal, Union
 
-from pydantic import IPvAnyAddress, PositiveInt, SecretStr
+from pydantic import IPvAnyAddress, PositiveInt, SecretStr, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-_BASE_DIR = Path(__file__).parent.parent.parent
+_PROJECT_ROOT = Path(__file__).parent.parent.parent
 
 
 def _get_version_from_pyproject():
@@ -19,7 +19,7 @@ def _get_version_from_pyproject():
         pass
 
     try:
-        pyproject_path = _BASE_DIR / "pyproject.toml"
+        pyproject_path = _PROJECT_ROOT / "pyproject.toml"
         with open(pyproject_path, "rb") as f:
             data = tomllib.load(f)
             return data.get("project", {}).get("version", "0.0.0")
@@ -48,6 +48,12 @@ class Settings(BaseSettings):
     DB_NAME: str = "postgres"
     DB_USERNAME: str = "postgres"
     DB_PASSWORD: SecretStr = SecretStr("postgres")
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def PROJECT_ROOT(self) -> Path:
+        return _PROJECT_ROOT
+
 
 @lru_cache
 def get_settings():
