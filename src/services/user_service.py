@@ -9,7 +9,7 @@ from core.security import get_password_hash, verify_password
 from domain.dto import ChangePasswordUserInput, PatchUpdateUserInput
 from domain.entities import User
 from domain.enums.system_roles import SystemRole
-from domain.errors import BadLoginError, ConflictError, ForbiddenError, NotFoundError
+from domain.errors import BadLoginError, ConflictError, NotFoundError
 from domain.interfaces.database.filters import UserFilter
 from domain.validators import PasswordStr
 
@@ -17,7 +17,6 @@ from domain.validators import PasswordStr
 if TYPE_CHECKING:
     from pydantic import UUID7, EmailStr
 
-    from domain.dto import IdentityContext
     from domain.entities import Permission
     from domain.interfaces.database.uow import IDatabaseTransactionFactory
     from services import AccessService
@@ -28,9 +27,6 @@ logger = logging.getLogger(__name__)
 class UserService:
     """
     Сервис управления пользователями.
-
-    Отвечает за бизнес-логику работы с аккаунтами: поиск, обновление данных,
-    смену паролей, управление ролями и "мягкое" удаление.
     """
 
     def __init__(

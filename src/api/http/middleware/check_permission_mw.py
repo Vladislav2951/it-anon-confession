@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from fastapi import Depends
 
 from api.http.common_exceptions import forbidden
-from api.http.middleware import get_current_user
+from api.http.middleware.get_current_user_mw import get_current_user
 from core.dependencies import access_srv
 from domain.errors import ForbiddenError
 

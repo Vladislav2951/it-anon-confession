@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     from pydantic import UUID7
 
-    from domain.dto import ConfessionCreateInput, ConfessionUpdateInput, IdentityContext
+    from domain.dto import ConfessionCreateInput, ConfessionUpdateInput
     from domain.entities import User
     from domain.interfaces.database.uow import IDatabaseTransactionFactory
     from services import AccessService

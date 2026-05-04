@@ -9,7 +9,6 @@ from domain.errors import NotFoundError
 if TYPE_CHECKING:
     from pydantic import UUID7
 
-    from domain.dto import IdentityContext
     from domain.entities import BusinessElement
     from domain.interfaces.database.uow import IDatabaseTransactionFactory
     from services import AccessService

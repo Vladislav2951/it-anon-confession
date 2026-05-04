@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     from pydantic import UUID7
 
-    from domain.dto import IdentityContext
     from domain.entities import Permission
     from domain.interfaces.database.uow import IDatabaseTransactionFactory
     from services import AccessService
