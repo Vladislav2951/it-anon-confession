@@ -115,16 +115,20 @@ class UserService:
             )
 
     async def soft_delete(self, id: UUID7, current_user: User) -> None:
-        #! Нельзя удалить последнего администратора
-        # await self.access_srv.check_access(
-        #     identity_ctx.current_user,
-        #     identity_ctx.business_element_name,
-        #     identity_ctx.action,
-        #     id,
-        # )
-
         async with self._db_transaction_factory() as t:
             if await t.user_repo.get_one(id):
+                if current_user.id == id:
+                    # Нельзя удалить последнего администратора
+                    roles = await t.role_repo.get_user_roles(id)
+                    if any(r.name == SystemRole.admin.value for r in roles):
+                        admins = await t.user_repo.get_all(
+                            UserFilter(roles=[SystemRole.admin.value])
+                        )
+                        if len(admins) == 1:
+                            raise ConflictError("System requires at least one admin")
+
+                        logger.warning("Administrator %s is going to be deleted", id)
+
                 await t.user_repo.soft_delete(id)
                 await t.session_repo.delete_all_for_user(id)
 

@@ -105,8 +105,6 @@ async def delete_self(
         response.delete_cookie(key="session_id")
         return response
 
-    except ForbiddenError:
-        raise forbidden()
     except Exception as e:
         logger.exception("Error during self account delete: %s", str(e))
         raise internal_server_error()

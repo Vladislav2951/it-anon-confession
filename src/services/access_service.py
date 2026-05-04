@@ -44,18 +44,6 @@ class AccessService:
             )
 
             if self._is_allowed(permissions=permissions, action=action):
-                #  Нельзя удалить последнего администратора
-                # if (
-                #     action == Action.DELETE
-                #     and resource_owner_id == user.id
-                #     and any(r.name == SystemRole.admin.value for r in roles)
-                # ):
-                #     admins = await t.user_repo.get_all(
-                #         UserFilter(roles=[SystemRole.admin.value])
-                #     )
-                #     if len(admins) == 1:
-                #         raise ForbiddenError("System requires at least one admin")
-
                 return
 
             raise ForbiddenError("Access denied")

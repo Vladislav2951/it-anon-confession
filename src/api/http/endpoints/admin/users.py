@@ -7,12 +7,7 @@ from fastapi import APIRouter, Depends, Query, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import UUID7
 
-from api.http.common_exceptions import (
-    conflict,
-    forbidden,
-    internal_server_error,
-    not_found,
-)
+from api.http.common_exceptions import conflict, internal_server_error, not_found
 from api.http.dto import PaginationDTO, UserPublic
 from api.http.middleware import PermissionChecker, get_current_user
 from api.http.response_models import (
@@ -26,7 +21,7 @@ from core.config import get_settings
 from core.dependencies import user_srv
 from domain.entities import Permission
 from domain.enums import Action
-from domain.errors import ConflictError, ForbiddenError, NotFoundError
+from domain.errors import ConflictError, NotFoundError
 
 
 settings = get_settings()
@@ -99,12 +94,12 @@ async def delete(
         response.delete_cookie(key="session_id")
         return response
 
-    except ForbiddenError:
+    except ConflictError as e:
         logger.warning(
             "An attempt by the last administrator (%s) to delete himself was detected",
             user_id,
         )
-        raise forbidden("Are you trying to remove yourself?")
+        raise conflict(str(e))
 
     except Exception as e:
         logger.exception("Error during deleting account: %s", str(e))
