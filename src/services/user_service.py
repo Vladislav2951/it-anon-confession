@@ -84,7 +84,7 @@ class UserService:
         )
 
         async with self._db_transaction_factory() as t:
-            return await t.user_repo.get_all()
+            return await t.user_repo.get_all(None, limit, offset)
 
     async def update(
         self, id: UUID7, update_inp: PatchUpdateUserInput, identity_ctx: IdentityContext
