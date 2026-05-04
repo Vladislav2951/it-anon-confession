@@ -121,10 +121,10 @@ class UserService:
                     # Нельзя удалить последнего администратора
                     roles = await t.role_repo.get_user_roles(id)
                     if any(r.name == SystemRole.admin.value for r in roles):
-                        admins = await t.user_repo.get_all(
+                        _, admins_count = await t.user_repo.get_all(
                             UserFilter(roles=[SystemRole.admin.value])
                         )
-                        if len(admins) == 1:
+                        if admins_count == 1:
                             raise ConflictError("System requires at least one admin")
 
                         logger.warning("Administrator %s is going to be deleted", id)

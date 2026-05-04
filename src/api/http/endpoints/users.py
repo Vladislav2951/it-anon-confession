@@ -105,6 +105,12 @@ async def delete_self(
         response.delete_cookie(key="session_id")
         return response
 
+    except ConflictError as e:
+        logger.warning(
+            "An attempt by the last administrator (%s) to delete himself was detected",
+            current_user.id,
+        )
+        raise conflict(str(e))
     except Exception as e:
         logger.exception("Error during self account delete: %s", str(e))
         raise internal_server_error()
