@@ -47,7 +47,19 @@ class Settings(BaseSettings):
     DB_PORT: int = 5432
     DB_NAME: str = "postgres"
     DB_USERNAME: str = "postgres"
-    DB_PASSWORD: SecretStr = SecretStr("postgres")
+    DB_PASSWORD: str = "postgres"
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def DATABASE_URI(self) -> str:
+        return "{db_engine}://{username}:{password}@{host}:{port}/{database}".format(
+            db_engine=self.DB_ENGINE,
+            username=self.DB_USERNAME,
+            password=self.DB_PASSWORD,
+            host=self.DB_HOST,
+            port=self.DB_PORT,
+            database=self.DB_NAME,
+        )
 
     @computed_field  # type: ignore[prop-decorator]
     @property
