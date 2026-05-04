@@ -8,8 +8,6 @@ from starlette.requests import Request
 
 from api.http.common_exceptions import unauthorized
 from core.dependencies import session_srv, user_srv
-from domain.dto import IdentityContext
-from domain.enums import Action
 
 
 if TYPE_CHECKING:
@@ -39,12 +37,12 @@ async def auth_only(
         await session_srv.delete(session_id)
         raise unauthorized()
 
-    identity_ctx = IdentityContext(
-        current_user=None, business_element_name="__system__", action=Action.READ
-    )
-    user: User | None = await user_srv.get_one(session.user_id, identity_ctx)
+    user = await user_srv.get_one(session.user_id)
     if not user:
         raise unauthorized()
 
+    permissions = await user_srv.get_user_permissions(session.user_id)
+
     request.state.user = user
     request.state.session = session
+    request.state.permissions = permissions

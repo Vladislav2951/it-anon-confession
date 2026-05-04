@@ -7,15 +7,25 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import UUID7, EmailStr
 
-from api.http.common_exceptions import forbidden, internal_server_error, not_found
+from api.http.common_exceptions import (
+    conflict,
+    forbidden,
+    internal_server_error,
+    not_found,
+)
 from api.http.dto import ChangePasswordDTO, UpdateUserDTO, UserPublic
-from api.http.middleware import IdentityContextFactory, auth_only, get_current_user
+from api.http.middleware import PermissionChecker, auth_only, get_current_user
 from api.http.response_models import DataResponse, ErrorResponse, MessageResponse
 from core.config import get_settings
 from core.dependencies import user_srv
-from domain.dto import IdentityContext
 from domain.enums import Action
-from domain.errors import AppErrorCode, BadLoginError, ForbiddenError, NotFoundError
+from domain.errors import (
+    AppErrorCode,
+    BadLoginError,
+    ConflictError,
+    ForbiddenError,
+    NotFoundError,
+)
 
 
 settings = get_settings()
@@ -28,6 +38,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+business_element_name = "users"
+
 router = APIRouter(
     prefix="/users",
     tags=["Users"],
@@ -39,8 +51,6 @@ router = APIRouter(
     },
 )
 
-business_element_name = "users"
-
 
 @router.get(
     "/{identifier}",
@@ -50,19 +60,16 @@ business_element_name = "users"
         status.HTTP_200_OK: {"description": "Success"},
         status.HTTP_404_NOT_FOUND: {"model": ErrorResponse},
     },
+    dependencies=[Depends(PermissionChecker(business_element_name, Action.READ))],
 )
 async def get_one(
-    identifier: EmailStr | UUID7,
-    user_srv: UserService = Depends(user_srv),
-    identity_ctx: IdentityContext = Depends(
-        IdentityContextFactory(business_element_name, Action.READ)
-    ),
+    identifier: EmailStr | UUID7, user_srv: UserService = Depends(user_srv)
 ):
     try:
         if isinstance(identifier, str):
-            user = await user_srv.get_one_by_email(identifier, identity_ctx)
+            user = await user_srv.get_one_by_email(identifier)
         else:
-            user = await user_srv.get_one(identifier, identity_ctx)
+            user = await user_srv.get_one(identifier)
 
         return JSONResponse(
             {
@@ -74,8 +81,8 @@ async def get_one(
 
     except NotFoundError:
         raise not_found("User not found")
-    except ForbiddenError:
-        raise forbidden()
+    # except ForbiddenError:
+    #     raise forbidden()
     except Exception as e:
         logger.exception("Error during getting user: %s", str(e))
         raise internal_server_error()
@@ -85,16 +92,14 @@ async def get_one(
     "/me",
     summary="Delete self account",
     responses={status.HTTP_204_NO_CONTENT: {"description": "Success"}},
+    dependencies=[Depends(PermissionChecker(business_element_name, Action.DELETE))],
 )
 async def delete_self(
-    user: User = Depends(get_current_user),
     user_srv: UserService = Depends(user_srv),
-    identity_ctx: IdentityContext = Depends(
-        IdentityContextFactory(business_element_name, Action.DELETE)
-    ),
+    current_user: User = Depends(get_current_user),
 ):
     try:
-        await user_srv.soft_delete(user.id, identity_ctx)
+        await user_srv.soft_delete(current_user.id, current_user)
 
         response = Response(status_code=status.HTTP_204_NO_CONTENT)
         response.delete_cookie(key="session_id")
@@ -115,17 +120,13 @@ async def delete_self(
         status.HTTP_200_OK: {"description": "Success"},
         status.HTTP_404_NOT_FOUND: {"model": ErrorResponse},
     },
+    dependencies=[Depends(PermissionChecker(business_element_name, Action.UPDATE))],
 )
 async def update(
-    user_id: UUID7,
-    update_data: UpdateUserDTO,
-    user_srv: UserService = Depends(user_srv),
-    identity_ctx: IdentityContext = Depends(
-        IdentityContextFactory(business_element_name, Action.UPDATE)
-    ),
+    user_id: UUID7, update_data: UpdateUserDTO, user_srv: UserService = Depends(user_srv)
 ):
     try:
-        user = await user_srv.update(user_id, update_data, identity_ctx)
+        user = await user_srv.update(user_id, update_data)
         return JSONResponse(
             {
                 "data": UserPublic.model_validate(user, from_attributes=True).model_dump(
@@ -134,17 +135,17 @@ async def update(
             }
         )
 
-    except ForbiddenError:
-        raise forbidden()
     except NotFoundError:
         raise not_found("User not found")
+    except ConflictError:
+        raise conflict("User with suck email or nickname is already exist")
     except Exception as e:
         logger.exception("Error during user patch update: %s", str(e))
         raise internal_server_error()
 
 
 @router.post(
-    "/{user_id}/change-password",
+    "/me/change-password",
     summary="Update user",
     response_model=MessageResponse,
     responses={
@@ -152,18 +153,16 @@ async def update(
         status.HTTP_404_NOT_FOUND: {"model": ErrorResponse},
         status.HTTP_422_UNPROCESSABLE_CONTENT: {"description": "Validation error"},
     },
+    dependencies=[Depends(PermissionChecker(business_element_name, Action.UPDATE))],
 )
 async def change_password(
-    user_id: UUID7,
     password_data: ChangePasswordDTO,
     user_srv: UserService = Depends(user_srv),
-    identity_ctx: IdentityContext = Depends(
-        IdentityContextFactory(business_element_name, Action.UPDATE)
-    ),
+    current_user: User = Depends(get_current_user),
 ):
     try:
         await user_srv.change_password(
-            user_id, password_data.old_password, password_data.password, identity_ctx
+            current_user.id, password_data.old_password, password_data.password
         )
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -176,8 +175,6 @@ async def change_password(
             },
         )
 
-    except ForbiddenError:
-        raise forbidden()
     except NotFoundError:
         raise not_found("User not found")
     except Exception as e:

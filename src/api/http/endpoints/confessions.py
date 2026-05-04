@@ -14,7 +14,12 @@ from api.http.dto import (
     ConfessionUpdateDTO,
     PaginationDTO,
 )
-from api.http.middleware import IdentityContextFactory, auth_only
+from api.http.middleware import (
+    IdentityContextFactory,
+    PermissionChecker,
+    auth_only,
+    get_current_user,
+)
 from api.http.response_models import DataManyResponse, DataResponse, ErrorResponse, Meta
 from core.config import get_settings
 from core.dependencies import confession_srv
@@ -26,6 +31,7 @@ settings = get_settings()
 
 if TYPE_CHECKING:
     from domain.dto import IdentityContext
+    from domain.entities import User
     from services import ConfessionService
 
 
@@ -50,16 +56,15 @@ business_element_name = "confessions"
     summary="Create confession",
     response_model=DataResponse[ConfessionPublic],
     responses={status.HTTP_201_CREATED: {"description": "Success"}},
+    dependencies=[Depends(PermissionChecker(business_element_name, Action.CREATE))],
 )
 async def create(
     data: ConfessionCreateDTO,
     confession_srv: ConfessionService = Depends(confession_srv),
-    identity_ctx: IdentityContext = Depends(
-        IdentityContextFactory(business_element_name, Action.CREATE)
-    ),
+    current_user: User = Depends(get_current_user),
 ):
     try:
-        confession = await confession_srv.create(data, identity_ctx)
+        confession = await confession_srv.create(data, current_user)
         return JSONResponse(
             {
                 "data": ConfessionPublic.model_validate(
@@ -69,8 +74,6 @@ async def create(
             status_code=status.HTTP_201_CREATED,
         )
 
-    except ForbiddenError:
-        raise forbidden()
     except Exception as e:
         logger.exception("Error during creating confession: %s", str(e))
         raise internal_server_error()
@@ -81,16 +84,13 @@ async def create(
     summary="Get confession",
     response_model=DataResponse[ConfessionPublic],
     responses={status.HTTP_200_OK: {"description": "Success"}},
+    dependencies=[Depends(PermissionChecker(business_element_name, Action.READ))],
 )
 async def get_one(
-    confession_id: UUID7,
-    confession_srv: ConfessionService = Depends(confession_srv),
-    identity_ctx: IdentityContext = Depends(
-        IdentityContextFactory(business_element_name, Action.READ)
-    ),
+    confession_id: UUID7, confession_srv: ConfessionService = Depends(confession_srv)
 ):
     try:
-        confession = await confession_srv.get_one(confession_id, identity_ctx)
+        confession = await confession_srv.get_one(confession_id)
         return JSONResponse(
             {
                 "data": ConfessionPublic.model_validate(
@@ -101,8 +101,6 @@ async def get_one(
 
     except NotFoundError:
         raise not_found("Confession not found")
-    except ForbiddenError:
-        raise forbidden()
     except Exception as e:
         logger.exception("Error during getting confession: %s", str(e))
         raise internal_server_error()
@@ -113,17 +111,15 @@ async def get_one(
     summary="Get all confessions",
     response_model=DataManyResponse[ConfessionPublic],
     responses={status.HTTP_200_OK: {"description": "Success"}},
+    dependencies=[Depends(PermissionChecker(business_element_name, Action.READ))],
 )
 async def get_all(
     pagination: Annotated[PaginationDTO, Query()],
     confession_srv: ConfessionService = Depends(confession_srv),
-    identity_ctx: IdentityContext = Depends(
-        IdentityContextFactory(business_element_name, Action.READ)
-    ),
 ):
     try:
         confessions, total = await confession_srv.get_all(
-            identity_ctx, pagination.limit, pagination.offset
+            pagination.limit, pagination.offset
         )
 
         data = [
@@ -136,8 +132,6 @@ async def get_all(
 
         return {"data": data, "meta": meta}
 
-    except ForbiddenError:
-        raise forbidden()
     except Exception as e:
         logger.exception("Error during fetching confessions: %s", str(e))
         raise internal_server_error()
@@ -148,17 +142,16 @@ async def get_all(
     summary="Update confession",
     response_model=DataResponse[ConfessionPublic],
     responses={status.HTTP_200_OK: {"description": "Success"}},
+    dependencies=[Depends(PermissionChecker(business_element_name, Action.UPDATE))],
 )
 async def update(
     confession_id: UUID7,
     update_data: ConfessionUpdateDTO,
     confession_srv: ConfessionService = Depends(confession_srv),
-    identity_ctx: IdentityContext = Depends(
-        IdentityContextFactory(business_element_name, Action.UPDATE)
-    ),
+    # current_user: User = Depends(get_current_user),
 ):
     try:
-        confession = await confession_srv.update(confession_id, update_data, identity_ctx)
+        confession = await confession_srv.update(confession_id, update_data)
         return JSONResponse(
             {
                 "data": ConfessionPublic.model_validate(
@@ -169,8 +162,6 @@ async def update(
 
     except NotFoundError:
         raise not_found("Confession not found")
-    except ForbiddenError:
-        raise forbidden()
     except Exception as e:
         logger.exception("Error during patching confession: %s", str(e))
         raise internal_server_error()
@@ -180,20 +171,17 @@ async def update(
     "/{confession_id}",
     summary="Delete confession",
     responses={status.HTTP_204_NO_CONTENT: {"description": "Success"}},
+    dependencies=[Depends(PermissionChecker(business_element_name, Action.DELETE))],
 )
 async def delete(
-    confession_id: UUID7,
-    confession_srv: ConfessionService = Depends(confession_srv),
-    identity_ctx: IdentityContext = Depends(
-        IdentityContextFactory(business_element_name, Action.DELETE)
-    ),
+    confession_id: UUID7, confession_srv: ConfessionService = Depends(confession_srv)
 ):
     try:
-        await confession_srv.delete(confession_id, identity_ctx)
+        await confession_srv.delete(confession_id)
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-    except ForbiddenError:
-        raise forbidden()
+    # except ForbiddenError:
+    #     raise forbidden()
     except Exception as e:
         logger.exception("Error during deleting confession: %s", str(e))
         raise internal_server_error()

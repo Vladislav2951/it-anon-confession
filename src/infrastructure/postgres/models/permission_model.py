@@ -22,25 +22,18 @@ class PermissionModel(Base):
         ForeignKey("business_elements.id", ondelete="CASCADE"), nullable=False
     )
 
-    read_permission: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    read_all_permission: Mapped[bool] = mapped_column(
-        Boolean, default=False, nullable=False
-    )
     create_permission: Mapped[bool] = mapped_column(
         Boolean, default=False, nullable=False
     )
+    read_permission: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     update_permission: Mapped[bool] = mapped_column(
         Boolean, default=False, nullable=False
     )
-    update_all_permission: Mapped[bool] = mapped_column(
-        Boolean, default=False, nullable=False
-    )
+
     delete_permission: Mapped[bool] = mapped_column(
         Boolean, default=False, nullable=False
     )
-    delete_all_permission: Mapped[bool] = mapped_column(
-        Boolean, default=False, nullable=False
-    )
+
     description: Mapped[Optional[str]] = mapped_column(String(250), nullable=True)
 
     roles: Mapped[list[RoleModel]] = relationship(

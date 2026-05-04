@@ -125,8 +125,11 @@ class UserRepo(BaseRepo, IUserRepo):
             .returning(UserModel)
             .options(noload(UserModel.roles))
         )
+        try:
+            result = await self._session.execute(stmt)
+        except IntegrityError as e:
+            raise ConflictError(f"User with such email or nickname is already exist: {e}")
 
-        result = await self._session.execute(stmt)
         logger.debug("Execute: %s", stmt)
         user = result.scalar_one()
 

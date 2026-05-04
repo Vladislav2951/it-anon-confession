@@ -31,13 +31,7 @@ class PermissionService:
         self._db_transaction_factory = db_transaction_factory
         self.access_srv = access_srv
 
-    async def get_one(self, id: UUID7, identity_ctx: IdentityContext) -> Permission:
-        await self.access_srv.check_access(
-            identity_ctx.current_user,
-            identity_ctx.business_element_name,
-            identity_ctx.action,
-        )
-
+    async def get_one(self, id: UUID7) -> Permission:
         async with self._db_transaction_factory() as t:
             permission = await t.permission_repo.get_one(id)
             if not permission:
@@ -46,13 +40,7 @@ class PermissionService:
             return permission
 
     async def get_all(
-        self, identity_ctx: IdentityContext, limit: int = 20, offset: Optional[int] = None
+        self, limit: int = 20, offset: Optional[int] = None
     ) -> tuple[list[Permission], int]:
-        await self.access_srv.check_access(
-            identity_ctx.current_user,
-            identity_ctx.business_element_name,
-            identity_ctx.action,
-        )
-
         async with self._db_transaction_factory() as t:
             return await t.permission_repo.get_all(limit, offset)

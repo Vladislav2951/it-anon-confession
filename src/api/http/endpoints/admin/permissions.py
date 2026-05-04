@@ -7,39 +7,37 @@ from fastapi import APIRouter, Depends, Query, status
 from fastapi.responses import JSONResponse
 from pydantic import UUID7
 
-from api.http.common_exceptions import forbidden, internal_server_error, not_found
+from api.http.common_exceptions import internal_server_error, not_found
 from api.http.dto import PaginationDTO
-from api.http.middleware import IdentityContextFactory, auth_only
+from api.http.middleware import PermissionChecker
 from api.http.response_models import DataManyResponse, DataResponse, ErrorResponse, Meta
 from core.config import get_settings
 from core.dependencies import permission_srv
 from domain.entities import Permission
 from domain.enums import Action
-from domain.errors import ForbiddenError, NotFoundError
+from domain.errors import NotFoundError
 
 
 settings = get_settings()
 
 
 if TYPE_CHECKING:
-    from domain.dto import IdentityContext
     from services import PermissionService
 
 
 logger = logging.getLogger(__name__)
 
+business_element_name = "admin"
+
 router = APIRouter(
     prefix="/permissions",
     tags=["Permissions"],
-    dependencies=[Depends(auth_only)],
     responses={
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponse},
         status.HTTP_403_FORBIDDEN: {"model": ErrorResponse},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": ErrorResponse},
     },
 )
-
-business_element_name = "admin"
 
 
 @router.get(
@@ -50,22 +48,17 @@ business_element_name = "admin"
         status.HTTP_200_OK: {"description": "Success"},
         status.HTTP_404_NOT_FOUND: {"model": ErrorResponse},
     },
+    dependencies=[Depends(PermissionChecker(business_element_name, Action.READ))],
 )
 async def get_one(
-    permission_id: UUID7,
-    permission_srv: PermissionService = Depends(permission_srv),
-    identity_ctx: IdentityContext = Depends(
-        IdentityContextFactory(business_element_name, Action.READ)
-    ),
+    permission_id: UUID7, permission_srv: PermissionService = Depends(permission_srv)
 ):
     try:
-        permission = await permission_srv.get_one(permission_id, identity_ctx)
+        permission = await permission_srv.get_one(permission_id)
         return JSONResponse({"data": permission.model_dump(mode="json")})
 
     except NotFoundError:
         raise not_found("Permission not found")
-    except ForbiddenError:
-        raise forbidden()
     except Exception as e:
         logger.exception("Error during getting permission: %s", str(e))
         raise internal_server_error()
@@ -76,17 +69,15 @@ async def get_one(
     summary="Get permissions",
     response_model=DataManyResponse[Permission],
     responses={status.HTTP_200_OK: {"description": "Success"}},
+    dependencies=[Depends(PermissionChecker(business_element_name, Action.READ))],
 )
 async def get_all(
     pagination: Annotated[PaginationDTO, Query()],
     permission_srv: PermissionService = Depends(permission_srv),
-    identity_ctx: IdentityContext = Depends(
-        IdentityContextFactory(business_element_name, Action.READ)
-    ),
 ):
     try:
         permissions, total = await permission_srv.get_all(
-            identity_ctx, pagination.limit, pagination.offset
+            pagination.limit, pagination.offset
         )
 
         data = [p.model_dump(mode="json") for p in permissions]
@@ -94,8 +85,6 @@ async def get_all(
 
         return {"data": data, "meta": meta}
 
-    except ForbiddenError:
-        raise forbidden()
     except Exception as e:
         logger.exception("Error during getting permissions: %s", str(e))
         raise internal_server_error()

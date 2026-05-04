@@ -7,6 +7,6 @@ from domain.enums import Action
 
 
 class IdentityContext(BaseModel):
-    current_user: Optional[User]
+    current_user: User
     business_element_name: str
     action: Action

@@ -14,7 +14,7 @@ from api.http.common_exceptions import (
     not_found,
 )
 from api.http.dto import PaginationDTO, UserPublic
-from api.http.middleware import IdentityContextFactory, auth_only
+from api.http.middleware import PermissionChecker, get_current_user
 from api.http.response_models import (
     DataManyResponse,
     DataResponse,
@@ -33,16 +33,17 @@ settings = get_settings()
 
 
 if TYPE_CHECKING:
-    from domain.dto import IdentityContext
+    from domain.entities import User
     from services import UserService
 
 
 logger = logging.getLogger(__name__)
 
+business_element_name = "admin"
+
 router = APIRouter(
     prefix="/users",
     tags=["Users"],
-    dependencies=[Depends(auth_only)],
     responses={
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponse},
         status.HTTP_403_FORBIDDEN: {"model": ErrorResponse},
@@ -50,7 +51,6 @@ router = APIRouter(
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": ErrorResponse},
     },
 )
-business_element_name = "admin"
 
 
 @router.get(
@@ -58,18 +58,14 @@ business_element_name = "admin"
     summary="Get users",
     response_model=DataManyResponse[UserPublic],
     responses={status.HTTP_200_OK: {"description": "Success"}},
+    dependencies=[Depends(PermissionChecker(business_element_name, Action.READ))],
 )
 async def get_all(
     pagination: Annotated[PaginationDTO, Query()],
     user_srv: UserService = Depends(user_srv),
-    identity_ctx: IdentityContext = Depends(
-        IdentityContextFactory(business_element_name, Action.READ)
-    ),
 ):
     try:
-        users, total = await user_srv.get_all(
-            identity_ctx, pagination.limit, pagination.offset
-        )
+        users, total = await user_srv.get_all(pagination.limit, pagination.offset)
 
         data = [
             UserPublic.model_validate(u, from_attributes=True).model_dump(mode="json")
@@ -79,8 +75,6 @@ async def get_all(
 
         return {"data": data, "meta": meta}
 
-    except ForbiddenError:
-        raise forbidden()
     except Exception as e:
         logger.exception("Error during getting users: %s", str(e))
         raise internal_server_error()
@@ -91,16 +85,15 @@ async def get_all(
     summary="Delete account",
     response_model=MessageResponse,
     responses={status.HTTP_204_NO_CONTENT: {"description": "Success"}},
+    dependencies=[Depends(PermissionChecker(business_element_name, Action.DELETE))],
 )
 async def delete(
     user_id: UUID7,
     user_srv: UserService = Depends(user_srv),
-    identity_ctx: IdentityContext = Depends(
-        IdentityContextFactory(business_element_name, Action.DELETE)
-    ),
+    current_user: User = Depends(get_current_user),
 ):
     try:
-        await user_srv.soft_delete(user_id, identity_ctx)
+        await user_srv.soft_delete(user_id, current_user)
 
         response = Response(status_code=status.HTTP_204_NO_CONTENT)
         response.delete_cookie(key="session_id")
@@ -126,23 +119,16 @@ async def delete(
         status.HTTP_200_OK: {"description": "Success"},
         status.HTTP_404_NOT_FOUND: {"model": ErrorResponse},
     },
+    dependencies=[Depends(PermissionChecker(business_element_name, Action.READ))],
 )
-async def get_user_permissions(
-    user_id: UUID7,
-    user_srv: UserService = Depends(user_srv),
-    identity_ctx: IdentityContext = Depends(
-        IdentityContextFactory(business_element_name, Action.READ)
-    ),
-):
+async def get_user_permissions(user_id: UUID7, user_srv: UserService = Depends(user_srv)):
     try:
-        permissions = await user_srv.get_user_permissions(user_id, identity_ctx)
+        permissions = await user_srv.get_user_permissions(user_id)
         data = [p.model_dump(mode="json") for p in permissions]
         return JSONResponse({"data": data})
 
     except NotFoundError as e:
         raise not_found("User not found")
-    except ForbiddenError:
-        raise forbidden()
     except Exception as e:
         logger.exception("Error during fetching user permissions: %s", str(e))
         raise internal_server_error()
@@ -152,25 +138,19 @@ async def get_user_permissions(
     "/{user_id}/assign-role/{role_id}",
     summary="Assign role to user",
     responses={status.HTTP_204_NO_CONTENT: {"description": "Success"}},
+    dependencies=[Depends(PermissionChecker(business_element_name, Action.UPDATE))],
 )
 async def assign_role(
-    user_id: UUID7,
-    role_id: UUID7,
-    user_srv: UserService = Depends(user_srv),
-    identity_ctx: IdentityContext = Depends(
-        IdentityContextFactory(business_element_name, Action.UPDATE)
-    ),
+    user_id: UUID7, role_id: UUID7, user_srv: UserService = Depends(user_srv)
 ):
     try:
-        await user_srv.assign_role(user_id, role_id, identity_ctx)
+        await user_srv.assign_role(user_id, role_id)
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
     except NotFoundError as e:
         raise not_found(str(e))
     except ConflictError as e:
         raise conflict(str(e))
-    except ForbiddenError:
-        raise forbidden()
     except Exception as e:
         logger.exception("Error during assigning role: %s", str(e))
         raise internal_server_error()
@@ -180,23 +160,19 @@ async def assign_role(
     "/{user_id}/revoke-role/{role_id}",
     summary="Revoke role from user",
     responses={status.HTTP_204_NO_CONTENT: {"description": "Success"}},
+    dependencies=[Depends(PermissionChecker(business_element_name, Action.UPDATE))],
 )
 async def revoke_role(
-    user_id: UUID7,
-    role_id: UUID7,
-    user_srv: UserService = Depends(user_srv),
-    identity_ctx: IdentityContext = Depends(
-        IdentityContextFactory(business_element_name, Action.UPDATE)
-    ),
+    user_id: UUID7, role_id: UUID7, user_srv: UserService = Depends(user_srv)
 ):
     try:
-        await user_srv.revoke_role(user_id, role_id, identity_ctx)
+        await user_srv.revoke_role(user_id, role_id)
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
     except NotFoundError as e:
         raise not_found(str(e))
-    except ForbiddenError as e:
-        raise forbidden(str(e))
+    except ConflictError as e:
+        raise conflict(str(e))
     except Exception as e:
         logger.exception("Error during revoking role: %s", str(e))
         raise internal_server_error()

@@ -14,7 +14,7 @@ from api.http.common_exceptions import (
     not_found,
 )
 from api.http.dto import PaginationDTO, RoleCreateDTO, RoleUpdateDTO
-from api.http.middleware import IdentityContextFactory, auth_only
+from api.http.middleware import PermissionChecker
 from api.http.response_models import DataManyResponse, DataResponse, ErrorResponse, Meta
 from core.config import get_settings
 from core.dependencies import role_srv
@@ -27,23 +27,22 @@ settings = get_settings()
 
 
 if TYPE_CHECKING:
-    from domain.dto import IdentityContext
     from services import RoleService
 
 
 logger = logging.getLogger(__name__)
 
+business_element_name = "admin"
+
 router = APIRouter(
     prefix="/roles",
     tags=["Roles"],
-    dependencies=[Depends(auth_only)],
     responses={
         status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponse},
         status.HTTP_403_FORBIDDEN: {"model": ErrorResponse},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": ErrorResponse},
     },
 )
-business_element_name = "admin"
 
 
 @router.post(
@@ -51,22 +50,15 @@ business_element_name = "admin"
     summary="Create role",
     response_model=DataResponse[Role],
     responses={status.HTTP_201_CREATED: {"description": "Success"}},
+    dependencies=[Depends(PermissionChecker(business_element_name, Action.CREATE))],
 )
-async def create(
-    data: RoleCreateDTO,
-    role_srv: RoleService = Depends(role_srv),
-    identity_ctx: IdentityContext = Depends(
-        IdentityContextFactory(business_element_name, Action.CREATE)
-    ),
-):
+async def create(data: RoleCreateDTO, role_srv: RoleService = Depends(role_srv)):
     try:
-        role = await role_srv.create(data, identity_ctx)
+        role = await role_srv.create(data)
         return JSONResponse(
             {"data": role.model_dump(mode="json")}, status_code=status.HTTP_201_CREATED
         )
 
-    except ForbiddenError:
-        raise forbidden()
     except ConflictError:
         raise conflict("Role already exists")
     except Exception as e:
@@ -79,22 +71,15 @@ async def create(
     summary="Get role",
     response_model=DataResponse[Role],
     responses={status.HTTP_200_OK: {"description": "Success"}},
+    dependencies=[Depends(PermissionChecker(business_element_name, Action.READ))],
 )
-async def get_one(
-    role_id: UUID7,
-    role_srv: RoleService = Depends(role_srv),
-    identity_ctx: IdentityContext = Depends(
-        IdentityContextFactory(business_element_name, Action.READ)
-    ),
-):
+async def get_one(role_id: UUID7, role_srv: RoleService = Depends(role_srv)):
     try:
-        role = await role_srv.get_one(role_id, identity_ctx)
+        role = await role_srv.get_one(role_id)
         return JSONResponse({"data": role.model_dump(mode="json")})
 
     except NotFoundError:
         raise not_found("Role not found")
-    except ForbiddenError:
-        raise forbidden()
     except Exception as e:
         logger.exception("Error during getting role: %s", str(e))
         raise internal_server_error()
@@ -105,18 +90,14 @@ async def get_one(
     summary="Get roles",
     response_model=DataManyResponse[Role],
     responses={status.HTTP_200_OK: {"description": "Success"}},
+    dependencies=[Depends(PermissionChecker(business_element_name, Action.READ))],
 )
 async def get_all(
     pagination: Annotated[PaginationDTO, Query()],
     role_srv: RoleService = Depends(role_srv),
-    identity_ctx: IdentityContext = Depends(
-        IdentityContextFactory(business_element_name, Action.READ)
-    ),
 ):
     try:
-        roles, total = await role_srv.get_all(
-            identity_ctx, pagination.limit, pagination.offset
-        )
+        roles, total = await role_srv.get_all(pagination.limit, pagination.offset)
 
         data = [u.model_dump(mode="json") for u in roles]
         meta = Meta(page=pagination.page, size=pagination.size, total_items=total)
@@ -135,25 +116,19 @@ async def get_all(
     summary="Update role",
     response_model=DataResponse[Role],
     responses={status.HTTP_200_OK: {"description": "Success"}},
+    dependencies=[Depends(PermissionChecker(business_element_name, Action.UPDATE))],
 )
 async def update(
-    role_id: UUID7,
-    update_data: RoleUpdateDTO,
-    role_srv: RoleService = Depends(role_srv),
-    identity_ctx: IdentityContext = Depends(
-        IdentityContextFactory(business_element_name, Action.UPDATE)
-    ),
+    role_id: UUID7, update_data: RoleUpdateDTO, role_srv: RoleService = Depends(role_srv)
 ):
     try:
-        role = await role_srv.update(role_id, update_data, identity_ctx)
+        role = await role_srv.update(role_id, update_data)
         return JSONResponse({"data": role.model_dump(mode="json")})
 
     except NotFoundError:
         raise not_found("Role not found")
     except ConflictError as e:
         raise conflict(str(e))
-    except ForbiddenError:
-        raise forbidden()
     except Exception as e:
         logger.exception("Error during patching role: %s", str(e))
         raise internal_server_error()
@@ -163,21 +138,16 @@ async def update(
     "/{role_id}",
     summary="Delete role",
     responses={status.HTTP_204_NO_CONTENT: {"description": "Success"}},
+    dependencies=[Depends(PermissionChecker(business_element_name, Action.DELETE))],
 )
-async def delete(
-    role_id: UUID7,
-    role_srv: RoleService = Depends(role_srv),
-    identity_ctx: IdentityContext = Depends(
-        IdentityContextFactory(business_element_name, Action.DELETE)
-    ),
-):
+async def delete(role_id: UUID7, role_srv: RoleService = Depends(role_srv)):
     try:
-        await role_srv.delete(role_id, identity_ctx)
+        await role_srv.delete(role_id)
 
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-    except ForbiddenError as e:
-        raise forbidden(str(e))
+    except ConflictError as e:
+        raise conflict(str(e))
     except Exception as e:
         logger.exception("Error during deleting role: %s", str(e))
         raise internal_server_error()
@@ -187,25 +157,19 @@ async def delete(
     "/{role_id}/assign-permission/{permission_id}",
     summary="Assign permission",
     responses={status.HTTP_204_NO_CONTENT: {"description": "Success"}},
+    dependencies=[Depends(PermissionChecker(business_element_name, Action.UPDATE))],
 )
 async def assign_permission(
-    role_id: UUID7,
-    permission_id: UUID7,
-    role_srv: RoleService = Depends(role_srv),
-    identity_ctx: IdentityContext = Depends(
-        IdentityContextFactory(business_element_name, Action.UPDATE)
-    ),
+    role_id: UUID7, permission_id: UUID7, role_srv: RoleService = Depends(role_srv)
 ):
     try:
-        await role_srv.assign_permission(role_id, permission_id, identity_ctx)
+        await role_srv.assign_permission(role_id, permission_id)
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
     except NotFoundError as e:
         raise not_found(str(e))
     except ConflictError as e:
         raise conflict(str(e))
-    except ForbiddenError:
-        raise forbidden()
     except Exception as e:
         logger.exception("Error during getting role: %s", str(e))
         raise internal_server_error()
@@ -215,23 +179,19 @@ async def assign_permission(
     "/{role_id}/revoke-permission/{permission_id}",
     summary="Revoke permission",
     responses={status.HTTP_204_NO_CONTENT: {"description": "Success"}},
+    dependencies=[Depends(PermissionChecker(business_element_name, Action.UPDATE))],
 )
 async def revoke_permission(
-    role_id: UUID7,
-    permission_id: UUID7,
-    role_srv: RoleService = Depends(role_srv),
-    identity_ctx: IdentityContext = Depends(
-        IdentityContextFactory(business_element_name, Action.UPDATE)
-    ),
+    role_id: UUID7, permission_id: UUID7, role_srv: RoleService = Depends(role_srv)
 ):
     try:
-        await role_srv.revoke_permission(role_id, permission_id, identity_ctx)
+        await role_srv.revoke_permission(role_id, permission_id)
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
     except NotFoundError as e:
         raise not_found(str(e))
-    except ForbiddenError:
-        raise forbidden()
+    except ConflictError as e:
+        raise conflict(str(e))
     except Exception as e:
         logger.exception("Error during getting role: %s", str(e))
         raise internal_server_error()

@@ -50,6 +50,6 @@ class UpdateError(AppError):
         super().__init__(message, code=AppErrorCode.BAD_REQUEST)
 
 
-class Unprocessable(AppError):
+class UnprocessableError(AppError):
     def __init__(self, message: Optional[str] = None):
         super().__init__(message, code=AppErrorCode.BAD_REQUEST)

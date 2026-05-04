@@ -9,7 +9,7 @@ from core.security import get_password_hash, verify_password
 from domain.dto import ChangePasswordUserInput, PatchUpdateUserInput
 from domain.entities import User
 from domain.enums.system_roles import SystemRole
-from domain.errors import BadLoginError, ForbiddenError, NotFoundError
+from domain.errors import BadLoginError, ConflictError, ForbiddenError, NotFoundError
 from domain.interfaces.database.filters import UserFilter
 from domain.validators import PasswordStr
 
@@ -41,14 +41,7 @@ class UserService:
         self._db_transaction_factory = db_transaction_factory
         self.access_srv = access_srv
 
-    async def get_one(self, id: UUID7, identity_ctx: IdentityContext) -> User:
-        await self.access_srv.check_access(
-            identity_ctx.current_user,
-            identity_ctx.business_element_name,
-            identity_ctx.action,
-            id,
-        )
-
+    async def get_one(self, id: UUID7) -> User:
         async with self._db_transaction_factory() as t:
             user = await t.user_repo.get_one(id)
             if not user:
@@ -56,18 +49,16 @@ class UserService:
 
             return user
 
-    async def get_one_by_email(
-        self, email: EmailStr, identity_ctx: IdentityContext
-    ) -> User:
+    async def get_one_by_email(self, email: EmailStr) -> User:
         async with self._db_transaction_factory() as t:
             user = await t.user_repo.get_one_by_email(email)
 
-            await self.access_srv.check_access(
-                identity_ctx.current_user,
-                identity_ctx.business_element_name,
-                identity_ctx.action,
-                user.id if user else None,
-            )
+            # await self.access_srv.check_access(
+            #     identity_ctx.current_user,
+            #     identity_ctx.business_element_name,
+            #     identity_ctx.action,
+            #     user.id if user else None,
+            # )
 
             if not user:
                 raise NotFoundError(f"User {email} not found")
@@ -75,26 +66,24 @@ class UserService:
             return user
 
     async def get_all(
-        self, identity_ctx: IdentityContext, limit: int = 20, offset: Optional[int] = None
+        self, limit: int = 20, offset: Optional[int] = None
     ) -> tuple[list[User], int]:
-        await self.access_srv.check_access(
-            identity_ctx.current_user,
-            identity_ctx.business_element_name,
-            identity_ctx.action,
-        )
+        # await self.access_srv.check_access(
+        #     identity_ctx.current_user,
+        #     identity_ctx.business_element_name,
+        #     identity_ctx.action,
+        # )
 
         async with self._db_transaction_factory() as t:
             return await t.user_repo.get_all(None, limit, offset)
 
-    async def update(
-        self, id: UUID7, update_inp: PatchUpdateUserInput, identity_ctx: IdentityContext
-    ) -> User:
-        await self.access_srv.check_access(
-            identity_ctx.current_user,
-            identity_ctx.business_element_name,
-            identity_ctx.action,
-            id,
-        )
+    async def update(self, id: UUID7, update_inp: PatchUpdateUserInput) -> User:
+        # await self.access_srv.check_access(
+        #     identity_ctx.current_user,
+        #     identity_ctx.business_element_name,
+        #     identity_ctx.action,
+        #     id,
+        # )
 
         async with self._db_transaction_factory() as t:
             user = await t.user_repo.get_one(id)
@@ -104,18 +93,14 @@ class UserService:
             return await t.user_repo.update(id, update_inp)
 
     async def change_password(
-        self,
-        id: UUID7,
-        old_password: SecretStr,
-        password: PasswordStr,
-        identity_ctx: IdentityContext,
+        self, id: UUID7, old_password: SecretStr, password: PasswordStr
     ):
-        await self.access_srv.check_access(
-            identity_ctx.current_user,
-            identity_ctx.business_element_name,
-            identity_ctx.action,
-            id,
-        )
+        # await self.access_srv.check_access(
+        #     identity_ctx.current_user,
+        #     identity_ctx.business_element_name,
+        #     identity_ctx.action,
+        #     id,
+        # )
 
         async with self._db_transaction_factory() as t:
             user = await t.user_repo.get_one(id)
@@ -133,14 +118,14 @@ class UserService:
                 id, ChangePasswordUserInput(password_hash=new_password_hash)
             )
 
-    async def soft_delete(self, id: UUID7, identity_ctx: IdentityContext) -> None:
-        # Нельзя удалить последнего администратора
-        await self.access_srv.check_access(
-            identity_ctx.current_user,
-            identity_ctx.business_element_name,
-            identity_ctx.action,
-            id,
-        )
+    async def soft_delete(self, id: UUID7, current_user: User) -> None:
+        #! Нельзя удалить последнего администратора
+        # await self.access_srv.check_access(
+        #     identity_ctx.current_user,
+        #     identity_ctx.business_element_name,
+        #     identity_ctx.action,
+        #     id,
+        # )
 
         async with self._db_transaction_factory() as t:
             if await t.user_repo.get_one(id):
@@ -150,14 +135,12 @@ class UserService:
             # Уже удалён
             return None
 
-    async def get_user_permissions(
-        self, user_id: UUID7, identity_ctx: IdentityContext
-    ) -> list[Permission]:
-        await self.access_srv.check_access(
-            identity_ctx.current_user,
-            identity_ctx.business_element_name,
-            identity_ctx.action,
-        )
+    async def get_user_permissions(self, user_id: UUID7) -> list[Permission]:
+        # await self.access_srv.check_access(
+        #     identity_ctx.current_user,
+        #     identity_ctx.business_element_name,
+        #     identity_ctx.action,
+        # )
 
         async with self._db_transaction_factory() as t:
             if not await t.user_repo.get_one(user_id):
@@ -165,14 +148,12 @@ class UserService:
 
             return await t.user_repo.get_permissions(user_id)
 
-    async def assign_role(
-        self, user_id: UUID7, role_id: UUID7, identity_ctx: IdentityContext
-    ):
-        await self.access_srv.check_access(
-            identity_ctx.current_user,
-            identity_ctx.business_element_name,
-            identity_ctx.action,
-        )
+    async def assign_role(self, user_id: UUID7, role_id: UUID7):
+        # await self.access_srv.check_access(
+        #     identity_ctx.current_user,
+        #     identity_ctx.business_element_name,
+        #     identity_ctx.action,
+        # )
 
         async with self._db_transaction_factory() as t:
             if not await t.user_repo.get_one(user_id):
@@ -183,14 +164,12 @@ class UserService:
 
             await t.user_repo.assign_role(user_id, role_id)
 
-    async def revoke_role(
-        self, user_id: UUID7, role_id: UUID7, identity_ctx: IdentityContext
-    ):
-        await self.access_srv.check_access(
-            identity_ctx.current_user,
-            identity_ctx.business_element_name,
-            identity_ctx.action,
-        )
+    async def revoke_role(self, user_id: UUID7, role_id: UUID7):
+        # await self.access_srv.check_access(
+        #     identity_ctx.current_user,
+        #     identity_ctx.business_element_name,
+        #     identity_ctx.action,
+        # )
 
         async with self._db_transaction_factory() as t:
             if not await t.user_repo.get_one(user_id):
@@ -208,7 +187,7 @@ class UserService:
                 # Если админ всего один
                 if len(admins) == 1:
                     if admins[0].id == user_id:
-                        raise ForbiddenError(
+                        raise ConflictError(
                             "Cannot remove the last administrator role from the system"
                         )
 
