@@ -31,6 +31,13 @@ def conflict(message: str = "Resource already exists") -> HTTPException:
     )
 
 
+def unprocessable(message: str = "Business validation error") -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        detail={"code": AppErrorCode.UNPROCESSABLE, "message": message},
+    )
+
+
 def internal_server_error(message: str = "An unexpected error occurred") -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
