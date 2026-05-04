@@ -81,13 +81,18 @@ class UserRepo(BaseRepo, IUserRepo):
         offset: Optional[int] = None,
     ) -> tuple[list[User], int]:
         stmt = select(UserModel).where(UserModel.deleted_at.is_(None))
+        count_stmt = (
+            select(func.count(func.distinct(UserModel.id)))
+            .select_from(UserModel)
+            .where(UserModel.deleted_at.is_(None))
+        )
 
         if filter and filter.roles:
             stmt = stmt.join(UserModel.roles).where(RoleModel.name.in_(filter.roles))
+            count_stmt = count_stmt.join(UserModel.roles).where(
+                RoleModel.name.in_(filter.roles)
+            )
 
-        count_stmt = select(func.count(func.distinct(UserModel.id))).select_from(
-            stmt.subquery()
-        )
         logger.debug("Execute: %s", count_stmt)
 
         stmt = stmt.limit(limit).offset(offset)

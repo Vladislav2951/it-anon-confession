@@ -25,7 +25,7 @@ class UserModel(Base):
     deleted_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
 
     roles: Mapped[list[RoleModel]] = relationship(
-        secondary="user_roles", back_populates="users", lazy="joined"
+        secondary="user_roles", back_populates="users", lazy="raise_on_sql"
     )
 
     sessions: Mapped[list[SessionModel]] = relationship(

@@ -27,5 +27,5 @@ class RoleModel(Base):
     )
 
     permissions: Mapped[list[PermissionModel]] = relationship(
-        secondary="role_permissions", back_populates="roles", lazy="joined"
+        secondary="role_permissions", back_populates="roles", lazy="raise_on_sql"
     )
