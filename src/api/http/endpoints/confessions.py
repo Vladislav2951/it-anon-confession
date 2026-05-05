@@ -27,12 +27,11 @@ from domain.enums import Action
 from domain.errors import NotFoundError
 
 
-settings = get_settings()
-
 if TYPE_CHECKING:
     from domain.entities import User
     from services import ConfessionService
 
+settings = get_settings()
 
 logger = logging.getLogger(__name__)
 

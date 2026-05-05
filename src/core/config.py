@@ -5,7 +5,7 @@ from pathlib import Path
 import tomllib
 from typing import Literal, Union
 
-from pydantic import IPvAnyAddress, PositiveInt, SecretStr, computed_field
+from pydantic import IPvAnyAddress, PositiveInt, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 

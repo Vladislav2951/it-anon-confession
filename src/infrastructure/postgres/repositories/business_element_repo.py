@@ -12,12 +12,12 @@ from infrastructure.postgres.models import BusinessElementModel
 from infrastructure.postgres.repositories.base import BaseRepo
 
 
-logger = logging.getLogger(__name__)
-
 if TYPE_CHECKING:
     from pydantic import UUID7
 
     from domain.validators import NameStr
+
+logger = logging.getLogger(__name__)
 
 
 class BusinessElementRepo(BaseRepo, IBusinessElementRepo):

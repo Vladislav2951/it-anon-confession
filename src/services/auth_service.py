@@ -3,20 +3,17 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from pydantic import SecretStr
-
-from core.security import get_password_hash, verify_password
+from core.security import verify_password
 from domain.dto import LoginInput, RegisterInput
 from domain.entities import User
 from domain.enums import SystemRole
 from domain.errors import BadLoginError, ConflictError, NotFoundError
 
 
-logger = logging.getLogger(__name__)
-
-
 if TYPE_CHECKING:
     from domain.interfaces.database.uow import IDatabaseTransactionFactory
+
+logger = logging.getLogger(__name__)
 
 
 class AuthService:

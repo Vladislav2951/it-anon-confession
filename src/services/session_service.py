@@ -7,13 +7,12 @@ from core.security import get_token_hash
 from domain.entities import Session
 
 
-logger = logging.getLogger(__name__)
-
-
 if TYPE_CHECKING:
     from pydantic import UUID7
 
     from domain.interfaces.database.uow import IDatabaseTransactionFactory
+
+logger = logging.getLogger(__name__)
 
 
 class SessionService:

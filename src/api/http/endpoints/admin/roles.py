@@ -23,12 +23,10 @@ from domain.enums import Action
 from domain.errors import ConflictError, ForbiddenError, NotFoundError
 
 
-settings = get_settings()
-
-
 if TYPE_CHECKING:
     from services import RoleService
 
+settings = get_settings()
 
 logger = logging.getLogger(__name__)
 

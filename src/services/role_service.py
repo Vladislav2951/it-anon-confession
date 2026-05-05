@@ -7,9 +7,6 @@ from domain.entities import Role
 from domain.errors import ConflictError, NotFoundError
 
 
-logger = logging.getLogger(__name__)
-
-
 if TYPE_CHECKING:
     from pydantic import UUID7
 
@@ -17,6 +14,8 @@ if TYPE_CHECKING:
     from domain.interfaces.database.uow import IDatabaseTransactionFactory
     from domain.validators import NameStr
     from services import AccessService
+
+logger = logging.getLogger(__name__)
 
 
 class RoleService:

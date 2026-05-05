@@ -6,15 +6,14 @@ from typing import TYPE_CHECKING, Optional
 from domain.errors import NotFoundError
 
 
-logger = logging.getLogger(__name__)
-
-
 if TYPE_CHECKING:
     from pydantic import UUID7
 
     from domain.entities import Permission
     from domain.interfaces.database.uow import IDatabaseTransactionFactory
     from services import AccessService
+
+logger = logging.getLogger(__name__)
 
 
 class PermissionService:

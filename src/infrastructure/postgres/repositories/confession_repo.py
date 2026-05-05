@@ -13,12 +13,12 @@ from infrastructure.postgres.models import ConfessionModel
 from infrastructure.postgres.repositories.base import BaseRepo
 
 
-logger = logging.getLogger(__name__)
-
 if TYPE_CHECKING:
     from pydantic import UUID7
 
     from domain.dto import ConfessionUpdateInput
+
+logger = logging.getLogger(__name__)
 
 
 class ConfessionRepo(BaseRepo, IConfessionRepo):

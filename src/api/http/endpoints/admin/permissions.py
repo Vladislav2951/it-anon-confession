@@ -18,12 +18,10 @@ from domain.enums import Action
 from domain.errors import NotFoundError
 
 
-settings = get_settings()
-
-
 if TYPE_CHECKING:
     from services import PermissionService
 
+settings = get_settings()
 
 logger = logging.getLogger(__name__)
 

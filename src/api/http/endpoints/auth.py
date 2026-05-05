@@ -18,12 +18,10 @@ from domain.entities import Session
 from domain.errors import AppErrorCode, BadLoginError, ConflictError
 
 
-settings = get_settings()
-
-
 if TYPE_CHECKING:
     from services import AuthService, SessionService
 
+settings = get_settings()
 
 logger = logging.getLogger(__name__)
 

@@ -7,9 +7,6 @@ from domain.entities import Confession
 from domain.errors import NotFoundError
 
 
-logger = logging.getLogger(__name__)
-
-
 if TYPE_CHECKING:
     from pydantic import UUID7
 
@@ -17,6 +14,8 @@ if TYPE_CHECKING:
     from domain.entities import User
     from domain.interfaces.database.uow import IDatabaseTransactionFactory
     from services import AccessService
+
+logger = logging.getLogger(__name__)
 
 
 class ConfessionService:

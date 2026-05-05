@@ -17,10 +17,10 @@ from infrastructure.postgres.models import (
 from infrastructure.postgres.repositories.base import BaseRepo
 
 
-logger = logging.getLogger(__name__)
-
 if TYPE_CHECKING:
     from pydantic import UUID7
+
+logger = logging.getLogger(__name__)
 
 
 class PermissionRepo(BaseRepo, IPermissionRepo):

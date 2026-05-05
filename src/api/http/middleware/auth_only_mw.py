@@ -11,7 +11,6 @@ from core.dependencies import session_srv, user_srv
 
 
 if TYPE_CHECKING:
-    from domain.entities import User
     from services import SessionService, UserService
 
 
