@@ -10,7 +10,7 @@ from services.access_service import AccessService
 class TestAccessServiceUnit:
     async def test_is_allowed_logic(self, mock_uow_factory):
         service = AccessService(mock_uow_factory)
-        # user_id = uuid7()
+        user_id = uuid7()
 
         # Разрешено чтение всего
         perm_read = Permission(
@@ -19,19 +19,16 @@ class TestAccessServiceUnit:
         assert service._is_allowed(permissions=[perm_read], action=Action.READ) is True
 
         # Разрешено чтение только своего, запрашиваем чужое
-        # perm_read_own = Permission(
-        #     id=uuid7(), business_element_id=uuid7(), read_permission=True
-        # )
-        # assert (
-        #     service._is_allowed(permissions=[perm_read_own], action=Action.READ) is False
-        # )
+        perm_read_own = Permission(
+            id=uuid7(), business_element_id=uuid7(), read_own_permission=True
+        )
+        assert (
+            service._is_allowed([perm_read_own], Action.READ, user_id, uuid7()) is False
+        )
 
         # Разрешено чтение только своего, запрашиваем свое
-        # assert (
-        #     service._is_allowed(permissions=[perm_read_own], action=Action.READ) is True
-        # )
+        assert service._is_allowed([perm_read_own], Action.READ, user_id, user_id) is True
 
-        # CREATE всегда True, если есть create_permission
         perm_create = Permission(
             id=uuid7(), business_element_id=uuid7(), create_permission=True
         )
