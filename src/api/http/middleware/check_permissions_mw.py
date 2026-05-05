@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Optional
 
-from fastapi import Depends, Path, Request
+from fastapi import Depends, Path
 from pydantic import UUID7
 
 from api.http.common_exceptions import forbidden, internal_server_error
@@ -40,16 +40,8 @@ class PermissionChecker:
             raise forbidden()
 
 
-async def get_confession_id(request: Request) -> Optional[UUID7]:
-    confession_id = request.path_params.get("confession_id")
-    if not confession_id:
-        return None
-
-    try:
-        return UUID7(confession_id)
-    except Exception as e:
-        logger.error("confession_id=%s from parameters is not UUID: %s", confession_id, e)
-        raise internal_server_error()
+async def get_confession_id(confession_id: UUID7 = Path()) -> UUID7:
+    return confession_id
 
 
 class ConfessionPermissionChecker:
@@ -82,21 +74,6 @@ class ConfessionPermissionChecker:
 
 async def get_user_identifier(identifier: Identifier = Path()) -> Identifier:
     return identifier
-    # if not identifier:
-    #     return None
-
-    # try:
-    #     return UUID7(identifier)
-    # except Exception:
-    #     if isinstance(identifier, str):
-    #         return identifier
-
-    # logger.error(
-    #     "identifier=%s (type: %s) from parameters is not UUID or str",
-    #     identifier,
-    #     type(identifier),
-    # )
-    # raise internal_server_error()
 
 
 class UserPermissionChecker:

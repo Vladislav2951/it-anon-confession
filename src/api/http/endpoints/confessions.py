@@ -14,7 +14,12 @@ from api.http.dto import (
     ConfessionUpdateDTO,
     PaginationDTO,
 )
-from api.http.middleware import ConfessionPermissionChecker, auth_only, get_current_user
+from api.http.middleware import (
+    ConfessionPermissionChecker,
+    PermissionChecker,
+    auth_only,
+    get_current_user,
+)
 from api.http.response_models import DataManyResponse, DataResponse, ErrorResponse, Meta
 from core.config import get_settings
 from core.dependencies import confession_srv
@@ -50,9 +55,7 @@ router = APIRouter(
     summary="Create confession",
     response_model=DataResponse[ConfessionPublic],
     responses={status.HTTP_201_CREATED: {"description": "Success"}},
-    dependencies=[
-        Depends(ConfessionPermissionChecker(business_element_name, Action.CREATE))
-    ],
+    dependencies=[Depends(PermissionChecker(business_element_name, Action.CREATE))],
 )
 async def create(
     data: ConfessionCreateDTO,
@@ -80,9 +83,7 @@ async def create(
     summary="Get confession",
     response_model=DataResponse[ConfessionPublic],
     responses={status.HTTP_200_OK: {"description": "Success"}},
-    dependencies=[
-        Depends(ConfessionPermissionChecker(business_element_name, Action.READ))
-    ],
+    dependencies=[Depends(PermissionChecker(business_element_name, Action.READ))],
 )
 async def get_one(
     confession_id: UUID7, confession_srv: ConfessionService = Depends(confession_srv)
@@ -109,9 +110,7 @@ async def get_one(
     summary="Get all confessions",
     response_model=DataManyResponse[ConfessionPublic],
     responses={status.HTTP_200_OK: {"description": "Success"}},
-    dependencies=[
-        Depends(ConfessionPermissionChecker(business_element_name, Action.READ))
-    ],
+    dependencies=[Depends(PermissionChecker(business_element_name, Action.READ))],
 )
 async def get_all(
     pagination: Annotated[PaginationDTO, Query()],
