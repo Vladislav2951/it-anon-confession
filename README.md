@@ -101,8 +101,8 @@
 ### Пользователи (/users)
 
 * **GET** `/users/{identifier}` — Получение профиля (по UUID или Email)  
-* **PATCH** `/users/{id}` — Частичное обновление своих данных (nickname, bio)  
-* **POST** `/users/{id}/change-password` — Смена пароля (требует старый пароль)  
+* **PATCH** `/users/{id}` — Частичное обновление данных (nickname, bio, email)  
+* **POST** `/users/me/change-password` — Смена пароля (требует старый пароль)  
 * **DELETE** `/users/me` — Удаление собственного аккаунта ("мягкое" удаление)  
 
 ---
@@ -125,18 +125,18 @@
 
 * **GET** `/admin/users/` — Список всех зарегистрированных пользователей  
 * **DELETE** `/admin/users/{user_id}` — Удаление пользователя  
-* **GET** `/admin/users/{id}/permissions` — Просмотр всех прав пользователя  
-* **POST** `/admin/users/{id}/assign-role/{role_id}` — Назначить роль пользователю  
-* **POST** `/admin/users/{id}/revoke-role/{role_id}` — Отозвать роль у пользователя  
+* **GET** `/admin/users/{user_id}/permissions` — Просмотр всех прав пользователя  
+* **POST** `/admin/users/{user_id}/assign-role/{role_id}` — Назначить роль пользователю  
+* **POST** `/admin/users/{user_id}/revoke-role/{role_id}` — Отозвать роль у пользователя  
 
 #### Управление ролями и правами
 
 * **GET** `/admin/roles/` — Список всех ролей  
 * **POST** `/admin/roles/` — Создание новой роли  
-* **PATCH** `/admin/roles/{id}` — Переименование роли (кроме системных)  
-* **DELETE** `/admin/roles/{id}` — Удаление роли (кроме системных)
-* **POST** `/admin/roles/{id}/assign-permission/{permission_id}` — Назначить разрешение роли  
-* **POST** `/admin/roles/{id}/revoke-permission/{permission_id}` — Убрать разрешение у роли  
+* **PATCH** `/admin/roles/{role_id}` — Переименование роли (кроме системных)  
+* **DELETE** `/admin/roles/{role_id}` — Удаление роли (кроме системных)
+* **POST** `/admin/roles/{role_id}/assign-permission/{permission_id}` — Назначить разрешение роли  
+* **POST** `/admin/roles/{role_id}/revoke-permission/{permission_id}` — Убрать разрешение у роли  
 * **GET** `/admin/permissions/` — Список всех разрешений системы  
 * **GET** `/admin/business-elements/` — Список бизнес-элементов системы  
 
@@ -164,7 +164,7 @@
 Ограничения:
 
 * Последний администратор в системе не может быть удалён или снят
-* Системные роли `admin` и `user` не могут быть удалены
+* Системные роли `admin` и `user` не могут быть удалены / изменены
 
 ## Структура проекта
 
