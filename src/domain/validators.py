@@ -8,7 +8,7 @@
 from typing import Annotated
 
 import nh3
-from pydantic import BeforeValidator, SecretStr, StringConstraints
+from pydantic import UUID7, BeforeValidator, EmailStr, SecretStr, StringConstraints
 
 
 def sanitize_html(v: str) -> str:
@@ -45,3 +45,5 @@ BodyString = Annotated[
     StringConstraints(min_length=3, max_length=2000, strip_whitespace=True),
 ]
 PasswordStr = Annotated[SecretStr, StringConstraints(min_length=8, max_length=100)]
+
+Identifier = UUID7 | EmailStr
