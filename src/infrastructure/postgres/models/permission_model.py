@@ -34,6 +34,17 @@ class PermissionModel(Base):
         Boolean, default=False, nullable=False
     )
 
+    read_own_permission: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False
+    )
+    update_own_permission: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False
+    )
+
+    delete_own_permission: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False
+    )
+
     description: Mapped[Optional[str]] = mapped_column(String(250), nullable=True)
 
     roles: Mapped[list[RoleModel]] = relationship(

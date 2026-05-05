@@ -96,3 +96,8 @@ class ConfessionRepo(BaseRepo, IConfessionRepo):
     async def delete(self, id: UUID7):
         stmt = delete(ConfessionModel).where(ConfessionModel.id == id)
         await self._session.execute(stmt)
+
+    async def get_owner_id(self, id: UUID7) -> Optional[UUID7]:
+        stmt = select(ConfessionModel.user_id).where(ConfessionModel.id == id)
+        result = await self._session.execute(stmt)
+        return result.scalar_one_or_none()

@@ -72,3 +72,7 @@ class ConfessionService:
                 return None
 
             await t.confession_repo.delete(id)
+
+    async def get_owner_id(self, id: UUID7) -> Optional[UUID7]:
+        async with self._db_transaction_factory() as t:
+            return await t.confession_repo.get_owner_id(id)

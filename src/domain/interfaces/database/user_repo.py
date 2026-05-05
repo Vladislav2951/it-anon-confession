@@ -55,3 +55,7 @@ class IUserRepo(ABC):
     @abstractmethod
     async def revoke_role(self, user_id: UUID7, role_id: UUID7):
         pass
+
+    @abstractmethod
+    async def get_id_by_email(self, email: EmailStr) -> Optional[UUID7]:
+        pass

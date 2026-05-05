@@ -16,31 +16,33 @@ class TestBusinessElementAdmin:
         ]
 
         permission = Permission(
-            id=uuid7(), business_element_id=uuid7(), read_all_permission=True
+            id=uuid7(), business_element_id=uuid7(), read_permission=True
         )
         mock_uow.permission_repo.get_permissions_for_element.return_value = [permission]
 
     async def test_get_all_business_elements_success(self, auth_admin_client, mock_uow):
         """Проверка успешного получения списка всех бизнес-элементов."""
+        element_id = uuid7()
         elements = [
-            BusinessElement(id=uuid7(), name="users", description="User management"),
-            BusinessElement(
-                id=uuid7(), name="confessions", description="Confessions context"
-            ),
+            BusinessElement(id=element_id, name="admin", description="User management")
         ]
-        mock_uow.business_element_repo.get_all.return_value = elements
+        mock_uow.business_element_repo.get_all.return_value = (elements, 1)
+        permission = Permission.create(element_id, read_permission=True)
+        mock_uow.permission_repo.get_permissions_for_element.return_value = [permission]
 
         response = await auth_admin_client.get("/admin/business-elements/")
 
         assert response.status_code == 200
-        assert len(response.json()["data"]) == 2
-        assert response.json()["data"][0]["name"] == "users"
+        assert len(response.json()["data"]) == 1
+        assert response.json()["data"][0]["name"] == "admin"
 
     async def test_get_one_business_element_success(self, auth_admin_client, mock_uow):
         """Проверка получения одного элемента по ID."""
         element_id = uuid7()
         element = BusinessElement(id=element_id, name="admin", description="System admin")
         mock_uow.business_element_repo.get_one.return_value = element
+        permission = Permission.create(element_id, read_permission=True)
+        mock_uow.permission_repo.get_permissions_for_element.return_value = [permission]
 
         response = await auth_admin_client.get(f"/admin/business-elements/{element_id}")
 
@@ -52,6 +54,8 @@ class TestBusinessElementAdmin:
         """Проверка 404 ошибки при запросе несуществующего элемента."""
         element_id = uuid7()
         mock_uow.business_element_repo.get_one.return_value = None
+        permission = Permission.create(element_id, read_permission=True)
+        mock_uow.permission_repo.get_permissions_for_element.return_value = [permission]
 
         response = await auth_admin_client.get(f"/admin/business-elements/{element_id}")
 

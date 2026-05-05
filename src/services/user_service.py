@@ -11,7 +11,7 @@ from domain.entities import User
 from domain.enums.system_roles import SystemRole
 from domain.errors import BadLoginError, ConflictError, NotFoundError
 from domain.interfaces.database.filters import UserFilter
-from domain.validators import PasswordStr
+from domain.validators import Identifier, PasswordStr
 
 
 if TYPE_CHECKING:
@@ -48,14 +48,6 @@ class UserService:
     async def get_one_by_email(self, email: EmailStr) -> User:
         async with self._db_transaction_factory() as t:
             user = await t.user_repo.get_one_by_email(email)
-
-            # await self.access_srv.check_access(
-            #     identity_ctx.current_user,
-            #     identity_ctx.business_element_name,
-            #     identity_ctx.action,
-            #     user.id if user else None,
-            # )
-
             if not user:
                 raise NotFoundError(f"User {email} not found")
 
@@ -64,23 +56,10 @@ class UserService:
     async def get_all(
         self, limit: int = 20, offset: Optional[int] = None
     ) -> tuple[list[User], int]:
-        # await self.access_srv.check_access(
-        #     identity_ctx.current_user,
-        #     identity_ctx.business_element_name,
-        #     identity_ctx.action,
-        # )
-
         async with self._db_transaction_factory() as t:
             return await t.user_repo.get_all(None, limit, offset)
 
     async def update(self, id: UUID7, update_inp: PatchUpdateUserInput) -> User:
-        # await self.access_srv.check_access(
-        #     identity_ctx.current_user,
-        #     identity_ctx.business_element_name,
-        #     identity_ctx.action,
-        #     id,
-        # )
-
         async with self._db_transaction_factory() as t:
             user = await t.user_repo.get_one(id)
             if not user:
@@ -91,13 +70,6 @@ class UserService:
     async def change_password(
         self, id: UUID7, old_password: SecretStr, password: PasswordStr
     ):
-        # await self.access_srv.check_access(
-        #     identity_ctx.current_user,
-        #     identity_ctx.business_element_name,
-        #     identity_ctx.action,
-        #     id,
-        # )
-
         async with self._db_transaction_factory() as t:
             user = await t.user_repo.get_one(id)
             if not user:
@@ -136,12 +108,6 @@ class UserService:
             return None
 
     async def get_user_permissions(self, user_id: UUID7) -> list[Permission]:
-        # await self.access_srv.check_access(
-        #     identity_ctx.current_user,
-        #     identity_ctx.business_element_name,
-        #     identity_ctx.action,
-        # )
-
         async with self._db_transaction_factory() as t:
             if not await t.user_repo.get_one(user_id):
                 raise NotFoundError(f"User {user_id} not found")
@@ -149,12 +115,6 @@ class UserService:
             return await t.user_repo.get_permissions(user_id)
 
     async def assign_role(self, user_id: UUID7, role_id: UUID7):
-        # await self.access_srv.check_access(
-        #     identity_ctx.current_user,
-        #     identity_ctx.business_element_name,
-        #     identity_ctx.action,
-        # )
-
         async with self._db_transaction_factory() as t:
             if not await t.user_repo.get_one(user_id):
                 raise NotFoundError(f"User {user_id} not found")
@@ -165,12 +125,6 @@ class UserService:
             await t.user_repo.assign_role(user_id, role_id)
 
     async def revoke_role(self, user_id: UUID7, role_id: UUID7):
-        # await self.access_srv.check_access(
-        #     identity_ctx.current_user,
-        #     identity_ctx.business_element_name,
-        #     identity_ctx.action,
-        # )
-
         async with self._db_transaction_factory() as t:
             if not await t.user_repo.get_one(user_id):
                 raise NotFoundError(f"User {user_id} not found")
@@ -192,3 +146,10 @@ class UserService:
                         )
 
             await t.user_repo.revoke_role(user_id, role_id)
+
+    async def get_owner_id(self, identifier: Identifier) -> Optional[UUID7]:
+        if isinstance(identifier, str):
+            async with self._db_transaction_factory() as t:
+                return await t.user_repo.get_id_by_email(identifier)
+        else:
+            return identifier

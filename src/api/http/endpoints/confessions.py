@@ -14,7 +14,7 @@ from api.http.dto import (
     ConfessionUpdateDTO,
     PaginationDTO,
 )
-from api.http.middleware import PermissionChecker, auth_only, get_current_user
+from api.http.middleware import ConfessionPermissionChecker, auth_only, get_current_user
 from api.http.response_models import DataManyResponse, DataResponse, ErrorResponse, Meta
 from core.config import get_settings
 from core.dependencies import confession_srv
@@ -31,6 +31,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+business_element_name = "confessions"
+
 router = APIRouter(
     prefix="/confessions",
     tags=["Confessions"],
@@ -42,15 +44,15 @@ router = APIRouter(
     },
 )
 
-business_element_name = "confessions"
-
 
 @router.post(
     "/",
     summary="Create confession",
     response_model=DataResponse[ConfessionPublic],
     responses={status.HTTP_201_CREATED: {"description": "Success"}},
-    dependencies=[Depends(PermissionChecker(business_element_name, Action.CREATE))],
+    dependencies=[
+        Depends(ConfessionPermissionChecker(business_element_name, Action.CREATE))
+    ],
 )
 async def create(
     data: ConfessionCreateDTO,
@@ -78,7 +80,9 @@ async def create(
     summary="Get confession",
     response_model=DataResponse[ConfessionPublic],
     responses={status.HTTP_200_OK: {"description": "Success"}},
-    dependencies=[Depends(PermissionChecker(business_element_name, Action.READ))],
+    dependencies=[
+        Depends(ConfessionPermissionChecker(business_element_name, Action.READ))
+    ],
 )
 async def get_one(
     confession_id: UUID7, confession_srv: ConfessionService = Depends(confession_srv)
@@ -105,7 +109,9 @@ async def get_one(
     summary="Get all confessions",
     response_model=DataManyResponse[ConfessionPublic],
     responses={status.HTTP_200_OK: {"description": "Success"}},
-    dependencies=[Depends(PermissionChecker(business_element_name, Action.READ))],
+    dependencies=[
+        Depends(ConfessionPermissionChecker(business_element_name, Action.READ))
+    ],
 )
 async def get_all(
     pagination: Annotated[PaginationDTO, Query()],
@@ -136,13 +142,14 @@ async def get_all(
     summary="Update confession",
     response_model=DataResponse[ConfessionPublic],
     responses={status.HTTP_200_OK: {"description": "Success"}},
-    dependencies=[Depends(PermissionChecker(business_element_name, Action.UPDATE))],
+    dependencies=[
+        Depends(ConfessionPermissionChecker(business_element_name, Action.UPDATE))
+    ],
 )
 async def update(
     confession_id: UUID7,
     update_data: ConfessionUpdateDTO,
     confession_srv: ConfessionService = Depends(confession_srv),
-    # current_user: User = Depends(get_current_user),
 ):
     try:
         confession = await confession_srv.update(confession_id, update_data)
@@ -165,7 +172,9 @@ async def update(
     "/{confession_id}",
     summary="Delete confession",
     responses={status.HTTP_204_NO_CONTENT: {"description": "Success"}},
-    dependencies=[Depends(PermissionChecker(business_element_name, Action.DELETE))],
+    dependencies=[
+        Depends(ConfessionPermissionChecker(business_element_name, Action.DELETE))
+    ],
 )
 async def delete(
     confession_id: UUID7, confession_srv: ConfessionService = Depends(confession_srv)
@@ -174,8 +183,6 @@ async def delete(
         await confession_srv.delete(confession_id)
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-    # except ForbiddenError:
-    #     raise forbidden()
     except Exception as e:
         logger.exception("Error during deleting confession: %s", str(e))
         raise internal_server_error()

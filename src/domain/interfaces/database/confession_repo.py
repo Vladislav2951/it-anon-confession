@@ -33,3 +33,7 @@ class IConfessionRepo(ABC):
     @abstractmethod
     async def delete(self, id: UUID7) -> None:
         pass
+
+    @abstractmethod
+    async def get_owner_id(self, id: UUID7) -> Optional[UUID7]:
+        pass

@@ -18,7 +18,7 @@ class TestPermissionAdmin:
         ]
 
         permission = Permission(
-            id=uuid7(), business_element_id=uuid7(), read_all_permission=True
+            id=uuid7(), business_element_id=uuid7(), read_permission=True
         )
         mock_uow.permission_repo.get_permissions_for_element.return_value = [permission]
 
@@ -28,7 +28,7 @@ class TestPermissionAdmin:
             Permission(
                 id=uuid7(),
                 business_element_id=uuid7(),
-                read_all_permission=True,
+                read_permission=True,
                 description="All Read",
             ),
             Permission(
@@ -38,7 +38,7 @@ class TestPermissionAdmin:
                 description="Create Own",
             ),
         ]
-        mock_uow.permission_repo.get_all.return_value = permissions_list
+        mock_uow.permission_repo.get_all.return_value = (permissions_list, 2)
 
         response = await auth_admin_client.get("/admin/permissions/")
 

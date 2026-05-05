@@ -178,3 +178,8 @@ class UserRepo(BaseRepo, IUserRepo):
             user_roles.c.user_id == user_id, user_roles.c.role_id == role_id
         )
         await self._session.execute(stmt)
+
+    async def get_id_by_email(self, email: EmailStr) -> Optional[UUID7]:
+        stmt = select(UserModel.id).where(UserModel.email == email)
+        result = await self._session.execute(stmt)
+        return result.scalar_one_or_none()

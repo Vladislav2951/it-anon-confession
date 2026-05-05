@@ -18,18 +18,16 @@ class TestAdminProtection:
             Role(id=uuid7(), name=SystemRole.admin.value, is_system=True)
         ]
         mock_uow.permission_repo.get_permissions_for_element.return_value = [
-            Permission(
-                id=uuid7(), business_element_id=uuid7(), delete_all_permission=True
-            )
+            Permission(id=uuid7(), business_element_id=uuid7(), delete_permission=True)
         ]
         # В системе только один админ (он сам)
-        mock_uow.user_repo.get_all.return_value = [test_admin]
+        mock_uow.user_repo.get_all.return_value = (None, 1)
 
         response = await auth_admin_client.delete(f"/admin/users/{test_admin.id}")
 
-        assert response.status_code == 403
+        assert response.status_code == 409
         assert (
-            "Are you trying to remove yourself?" in response.json()["detail"]["message"]
+            "System requires at least one admin" in response.json()["detail"]["message"]
         )
 
     @pytest.mark.asyncio
@@ -55,9 +53,7 @@ class TestAdminProtection:
             Role(id=uuid7(), name=SystemRole.admin.value, is_system=True)
         ]
         mock_uow.permission_repo.get_permissions_for_element.return_value = [
-            Permission(
-                id=uuid7(), business_element_id=uuid7(), delete_all_permission=True
-            )
+            Permission(id=uuid7(), business_element_id=uuid7(), delete_permission=True)
         ]
 
         # Чтобы проверка последнего админа прошла (их должно быть > 1)
@@ -78,9 +74,7 @@ class TestAdminProtection:
             Role(id=uuid7(), name=SystemRole.admin.value, is_system=True)
         ]
         mock_uow.permission_repo.get_permissions_for_element.return_value = [
-            Permission(
-                id=uuid7(), business_element_id=uuid7(), update_all_permission=True
-            )
+            Permission(id=uuid7(), business_element_id=uuid7(), update_permission=True)
         ]
 
         mock_uow.role_repo.get_one.return_value = Role(
@@ -94,7 +88,7 @@ class TestAdminProtection:
             f"/admin/users/{test_admin.id}/revoke-role/{role_id}"
         )
 
-        assert response.status_code == 403
+        assert response.status_code == 409
         assert "last administrator role" in response.json()["detail"]["message"]
         # Убеждаемся, что метод удаления в репозитории не был вызван
         mock_uow.user_repo.revoke_role.assert_not_called()
@@ -111,9 +105,7 @@ class TestAdminProtection:
             Role(id=uuid7(), name=SystemRole.admin.value, is_system=True)
         ]
         mock_uow.permission_repo.get_permissions_for_element.return_value = [
-            Permission(
-                id=uuid7(), business_element_id=uuid7(), update_all_permission=True
-            )
+            Permission(id=uuid7(), business_element_id=uuid7(), update_permission=True)
         ]
 
         # Мокаем двух админов
@@ -145,8 +137,8 @@ class TestAdminUserRoleManagement:
         god_permission = Permission(
             id=uuid7(),
             business_element_id=uuid7(),
-            update_all_permission=True,
-            read_all_permission=True,
+            update_permission=True,
+            read_permission=True,
         )
         mock_uow.permission_repo.get_permissions_for_element.return_value = [
             god_permission

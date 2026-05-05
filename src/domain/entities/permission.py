@@ -15,6 +15,10 @@ class Permission(BaseEntity):
     update_permission: bool = False
     delete_permission: bool = False
 
+    read_own_permission: bool = False
+    update_own_permission: bool = False
+    delete_own_permission: bool = False
+
     description: Optional[DescriptionStr] = None
 
     model_config = ConfigDict(from_attributes=True)
@@ -27,6 +31,9 @@ class Permission(BaseEntity):
         read_permission: bool = False,
         update_permission: bool = False,
         delete_permission: bool = False,
+        read_own_permission: bool = False,
+        update_own_permission: bool = False,
+        delete_own_permission: bool = False,
         description: Optional[DescriptionStr] = None,
     ) -> Self:
         return cls(
@@ -36,5 +43,8 @@ class Permission(BaseEntity):
             read_permission=read_permission,
             update_permission=update_permission,
             delete_permission=delete_permission,
+            read_own_permission=read_own_permission,
+            update_own_permission=update_own_permission,
+            delete_own_permission=delete_own_permission,
             description=description,
         )

@@ -27,7 +27,7 @@ class TestUserPermissionsIntegration:
         other_id = uuid7()
         mock_uow.role_repo.get_user_roles.return_value = [MagicMock(name="user")]
         mock_uow.permission_repo.get_permissions_for_element.return_value = [
-            Permission(id=uuid7(), business_element_id=uuid7(), read_permission=True)
+            Permission(id=uuid7(), business_element_id=uuid7(), read_own_permission=True)
         ]
 
         response = await auth_user_client.get(f"/users/{other_id}")
@@ -39,9 +39,9 @@ class TestUserPermissionsIntegration:
     ):
         mock_uow.role_repo.get_user_roles.return_value = [MagicMock(name="admin")]
         mock_uow.permission_repo.get_permissions_for_element.return_value = [
-            Permission(id=uuid7(), business_element_id=uuid7(), read_all_permission=True)
+            Permission(id=uuid7(), business_element_id=uuid7(), read_permission=True)
         ]
-        mock_uow.user_repo.get_all.return_value = [test_admin]
+        mock_uow.user_repo.get_all.return_value = ([test_admin], 1)
 
         response = await auth_admin_client.get("/admin/users/")
         assert response.status_code == 200

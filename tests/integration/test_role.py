@@ -20,9 +20,9 @@ class TestRolePermissionManagement:
         permission = Permission(
             id=uuid7(),
             business_element_id=uuid7(),
-            read_all_permission=True,
-            update_all_permission=True,
-            delete_all_permission=True,
+            read_permission=True,
+            update_permission=True,
+            delete_permission=True,
             create_permission=True,
         )
         mock_uow.permission_repo.get_permissions_for_element.return_value = [permission]
@@ -31,11 +31,10 @@ class TestRolePermissionManagement:
         role_id = uuid7()
         perm_id = uuid7()
 
-        # Настройка моков для middleware и проверки существования
+        role = Role(id=uuid7(), name="user")
+        mock_uow.role_repo.get_one.return_value = role
+        mock_uow.role_repo.get_user_roles.return_value = [role]
         mock_uow.permission_repo.get_one.return_value = MagicMock(spec=Permission)
-
-        # Права доступа админа
-        mock_uow.role_repo.get_user_roles.return_value = [Role(id=uuid7(), name="admin")]
 
         response = await auth_admin_client.post(
             f"/admin/roles/{role_id}/assign-permission/{perm_id}"
@@ -52,16 +51,10 @@ class TestRolePermissionManagement:
 
         mock_uow.user_repo.get_one.return_value = test_admin
 
-        # Уже назначено
         from domain.errors import ConflictError
 
         mock_uow.role_repo.assign_permission.side_effect = ConflictError(
             "Already assigned"
-        )
-
-        # Нарушение Unique Constraint)
-        mock_uow.role_repo.assign_permission.side_effect = ConflictError(
-            "Permission already assigned to this role"
         )
 
         response = await auth_admin_client.post(
@@ -78,6 +71,8 @@ class TestRolePermissionManagement:
         perm_id = uuid7()
 
         mock_uow.user_repo.get_one.return_value = test_admin
+        role = Role(id=uuid7(), name="user")
+        mock_uow.role_repo.get_one.return_value = role
 
         response = await auth_admin_client.post(
             f"/admin/roles/{role_id}/revoke-permission/{perm_id}"

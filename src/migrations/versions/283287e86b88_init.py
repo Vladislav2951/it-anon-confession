@@ -56,13 +56,13 @@ def upgrade() -> None:
         "permissions",
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("business_element_id", sa.UUID(), nullable=False),
-        sa.Column("read_permission", sa.Boolean(), nullable=False),
-        sa.Column("read_all_permission", sa.Boolean(), nullable=False),
         sa.Column("create_permission", sa.Boolean(), nullable=False),
+        sa.Column("read_permission", sa.Boolean(), nullable=False),
         sa.Column("update_permission", sa.Boolean(), nullable=False),
-        sa.Column("update_all_permission", sa.Boolean(), nullable=False),
         sa.Column("delete_permission", sa.Boolean(), nullable=False),
-        sa.Column("delete_all_permission", sa.Boolean(), nullable=False),
+        sa.Column("read_own_permission", sa.Boolean(), nullable=False),
+        sa.Column("update_own_permission", sa.Boolean(), nullable=False),
+        sa.Column("delete_own_permission", sa.Boolean(), nullable=False),
         sa.Column("description", sa.String(length=250), nullable=True),
         sa.ForeignKeyConstraint(
             ["business_element_id"], ["business_elements.id"], ondelete="CASCADE"
