@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import logging
 from typing import TYPE_CHECKING, Optional
 
@@ -59,24 +58,21 @@ class RoleRepo(BaseRepo, IRoleRepo):
 
     async def get_all(
         self, limit: Optional[int] = None, offset: Optional[int] = None
-    ) -> tuple[list[Role], int]:
+    ) -> list[Role]:
         stmt = select(RoleModel).limit(limit).offset(offset)
-        count_stmt = select(func.count()).select_from(RoleModel)
 
-        async with asyncio.TaskGroup() as tg:
-            result_task = tg.create_task(self._session.execute(stmt))
-            total_result_task = tg.create_task(self._session.execute(count_stmt))
+        result = await self._session.execute(stmt)
 
-        result = result_task.result()
-        total_result = total_result_task.result()
-
-        role_models = result.scalars().unique().all()
+        role_models = result.scalars().all()
         if not role_models:
-            return [], 0
+            return []
 
-        total = total_result.scalar_one()
+        return [Role.model_validate(m) for m in role_models]
 
-        return [Role.model_validate(m) for m in role_models], total
+    async def count(self) -> int:
+        stmt = select(func.count()).select_from(RoleModel)
+        total_result = await self._session.execute(stmt)
+        return total_result.scalar_one()
 
     async def update(self, id: UUID7, update_inp: RoleUpdateInput) -> Role:
         to_update = update_inp.model_dump(exclude_unset=True)

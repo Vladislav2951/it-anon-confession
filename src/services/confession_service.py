@@ -56,7 +56,11 @@ class ConfessionService:
         self, limit: int = 20, offset: Optional[int] = None
     ) -> tuple[list[Confession], int]:
         async with self._db_transaction_factory() as t:
-            return await t.confession_repo.get_all(limit, offset)
+            if count := await t.confession_repo.count():
+                confessions = await t.confession_repo.get_all(limit, offset)
+                return confessions, count
+            else:
+                return [], 0
 
     async def update(self, id: UUID7, update_inp: ConfessionUpdateInput) -> Confession:
         async with self._db_transaction_factory() as t:

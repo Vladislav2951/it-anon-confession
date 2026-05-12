@@ -38,7 +38,8 @@ class TestPermissionAdmin:
                 description="Create Own",
             ),
         ]
-        mock_uow.permission_repo.get_all.return_value = (permissions_list, 2)
+        mock_uow.permission_repo.count.return_value = 2
+        mock_uow.permission_repo.get_all.return_value = permissions_list
 
         response = await auth_admin_client.get("/admin/permissions/")
 

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 from datetime import datetime, timezone
 import logging
 from typing import TYPE_CHECKING, Optional
@@ -79,38 +78,37 @@ class UserRepo(BaseRepo, IUserRepo):
         filter: Optional[UserFilter] = None,
         limit: Optional[int] = None,
         offset: Optional[int] = None,
-    ) -> tuple[list[User], int]:
+    ) -> list[User]:
         stmt = select(UserModel).where(UserModel.deleted_at.is_(None))
-        count_stmt = (
-            select(func.count(func.distinct(UserModel.id)))
+
+        if filter and filter.roles:
+            stmt = stmt.where(UserModel.roles.any(RoleModel.name.in_(filter.roles)))
+
+        stmt = stmt.limit(limit).offset(offset)
+
+        result = await self._session.execute(stmt)
+        logger.debug("Execute: %s", stmt)
+
+        user_models = result.scalars().all()
+        if not user_models:
+            return []
+
+        return [User.model_validate(el) for el in user_models]
+
+    async def count(self, filter: Optional[UserFilter] = None) -> int:
+        stmt = (
+            select(func.count(UserModel.id))
             .select_from(UserModel)
             .where(UserModel.deleted_at.is_(None))
         )
 
         if filter and filter.roles:
-            stmt = stmt.join(UserModel.roles).where(RoleModel.name.in_(filter.roles))
-            count_stmt = count_stmt.join(UserModel.roles).where(
-                RoleModel.name.in_(filter.roles)
-            )
+            stmt = stmt.where(UserModel.roles.any(RoleModel.name.in_(filter.roles)))
 
-        logger.debug("Execute: %s", count_stmt)
+        total_result = await self._session.execute(stmt)
+        logger.debug("Execute: %s", stmt)
 
-        stmt = stmt.limit(limit).offset(offset)
-
-        async with asyncio.TaskGroup() as tg:
-            result_task = tg.create_task(self._session.execute(stmt))
-            total_result_task = tg.create_task(self._session.execute(count_stmt))
-
-        result = result_task.result()
-        total_result = total_result_task.result()
-
-        user_models = result.scalars().unique().all()
-        if not user_models:
-            return [], 0
-
-        total = total_result.scalar_one()
-
-        return [User.model_validate(el) for el in user_models], total
+        return total_result.scalar_one()
 
     async def update(
         self, id: UUID7, update_inp: ChangePasswordUserInput | PatchUpdateUserInput

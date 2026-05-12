@@ -23,5 +23,9 @@ class IBusinessElementRepo(ABC):
     @abstractmethod
     async def get_all(
         self, limit: Optional[int] = None, offset: Optional[int] = None
-    ) -> tuple[list[BusinessElement], int]:
+    ) -> list[BusinessElement]:
+        pass
+
+    @abstractmethod
+    async def count(self) -> int:
         pass

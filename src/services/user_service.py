@@ -57,7 +57,11 @@ class UserService:
         self, limit: int = 20, offset: Optional[int] = None
     ) -> tuple[list[User], int]:
         async with self._db_transaction_factory() as t:
-            return await t.user_repo.get_all(None, limit, offset)
+            if count := await t.user_repo.count():
+                users = await t.user_repo.get_all(None, limit, offset)
+                return users, count
+            else:
+                return [], 0
 
     async def update(self, id: UUID7, update_inp: PatchUpdateUserInput) -> User:
         async with self._db_transaction_factory() as t:
@@ -93,7 +97,7 @@ class UserService:
                     # Нельзя удалить последнего администратора
                     roles = await t.role_repo.get_user_roles(id)
                     if any(r.name == SystemRole.admin.value for r in roles):
-                        _, admins_count = await t.user_repo.get_all(
+                        admins_count = await t.user_repo.count(
                             UserFilter(roles=[SystemRole.admin.value])
                         )
                         if admins_count == 1:

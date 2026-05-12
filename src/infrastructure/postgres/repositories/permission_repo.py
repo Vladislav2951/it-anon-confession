@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import logging
 from typing import TYPE_CHECKING, Optional
 
@@ -26,24 +25,21 @@ logger = logging.getLogger(__name__)
 class PermissionRepo(BaseRepo, IPermissionRepo):
     async def get_all(
         self, limit: Optional[int] = None, offset: Optional[int] = None
-    ) -> tuple[list[Permission], int]:
+    ) -> list[Permission]:
         stmt = select(PermissionModel).limit(limit).offset(offset)
-        count_stmt = select(func.count()).select_from(PermissionModel)
 
-        async with asyncio.TaskGroup() as tg:
-            result_task = tg.create_task(self._session.execute(stmt))
-            total_result_task = tg.create_task(self._session.execute(count_stmt))
+        result = await self._session.execute(stmt)
 
-        result = result_task.result()
-        total_result = total_result_task.result()
-
-        permission_models = result.scalars().unique().all()
+        permission_models = result.scalars().all()
         if not permission_models:
-            return [], 0
+            return []
 
-        total = total_result.scalar_one()
+        return [self._to_entity(m) for m in permission_models]
 
-        return [self._to_entity(m) for m in permission_models], total
+    async def count(self) -> int:
+        stmt = select(func.count()).select_from(PermissionModel)
+        total_result = await self._session.execute(stmt)
+        return total_result.scalar_one()
 
     async def get_one(self, id: UUID7) -> Optional[Permission]:
         stmt = select(PermissionModel).where(PermissionModel.id == id)

@@ -41,4 +41,8 @@ class BusinessElementService:
         self, limit: int = 20, offset: Optional[int] = None
     ) -> tuple[list[BusinessElement], int]:
         async with self._db_transaction_factory() as t:
-            return await t.business_element_repo.get_all(limit, offset)
+            if count := await t.business_element_repo.count():
+                business_elements = await t.business_element_repo.get_all(limit, offset)
+                return business_elements, count
+            else:
+                return [], 0

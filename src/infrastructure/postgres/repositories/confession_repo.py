@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import logging
 from typing import TYPE_CHECKING, Optional
 
@@ -51,29 +50,26 @@ class ConfessionRepo(BaseRepo, IConfessionRepo):
 
     async def get_all(
         self, limit: Optional[int] = None, offset: Optional[int] = None
-    ) -> tuple[list[Confession], int]:
+    ) -> list[Confession]:
         stmt = (
             select(ConfessionModel)
             .order_by(ConfessionModel.created_at.desc())
             .limit(limit)
             .offset(offset)
         )
-        count_stmt = select(func.count()).select_from(ConfessionModel)
 
-        async with asyncio.TaskGroup() as tg:
-            result_task = tg.create_task(self._session.execute(stmt))
-            total_result_task = tg.create_task(self._session.execute(count_stmt))
-
-        result = result_task.result()
-        total_result = total_result_task.result()
+        result = await self._session.execute(stmt)
 
         models = result.scalars().all()
         if not models:
-            return [], 0
+            return []
 
-        total = total_result.scalar_one()
+        return [Confession.model_validate(el) for el in models]
 
-        return [Confession.model_validate(el) for el in models], total
+    async def count(self) -> int:
+        stmt = select(func.count()).select_from(ConfessionModel)
+        total_result = await self._session.execute(stmt)
+        return total_result.scalar_one()
 
     async def update(self, id: UUID7, update_inp: ConfessionUpdateInput) -> Confession:
         to_update = update_inp.model_dump(exclude_unset=True)

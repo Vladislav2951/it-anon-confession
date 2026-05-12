@@ -21,9 +21,7 @@ class TestUserPermissionsIntegration:
         assert response.status_code == 200
         assert response.json()["data"]["email"] == test_user.email
 
-    async def test_user_cannot_get_others_profile(
-        self, auth_user_client, mock_uow, test_user
-    ):
+    async def test_user_cannot_get_others_profile(self, auth_user_client, mock_uow):
         other_id = uuid7()
         mock_uow.role_repo.get_user_roles.return_value = [MagicMock(name="user")]
         mock_uow.permission_repo.get_permissions_for_element.return_value = [
@@ -41,7 +39,8 @@ class TestUserPermissionsIntegration:
         mock_uow.permission_repo.get_permissions_for_element.return_value = [
             Permission(id=uuid7(), business_element_id=uuid7(), read_permission=True)
         ]
-        mock_uow.user_repo.get_all.return_value = ([test_admin], 1)
+        mock_uow.user_repo.count.return_value = 1
+        mock_uow.user_repo.get_all.return_value = [test_admin]
 
         response = await auth_admin_client.get("/admin/users/")
         assert response.status_code == 200

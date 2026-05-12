@@ -26,7 +26,8 @@ class TestBusinessElementAdmin:
         elements = [
             BusinessElement(id=element_id, name="admin", description="User management")
         ]
-        mock_uow.business_element_repo.get_all.return_value = (elements, 1)
+        mock_uow.business_element_repo.count.return_value = 1
+        mock_uow.business_element_repo.get_all.return_value = elements
         permission = Permission.create(element_id, read_permission=True)
         mock_uow.permission_repo.get_permissions_for_element.return_value = [permission]
 

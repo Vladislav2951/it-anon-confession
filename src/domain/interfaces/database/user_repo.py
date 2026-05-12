@@ -31,7 +31,11 @@ class IUserRepo(ABC):
         filter: Optional[UserFilter] = None,
         limit: Optional[int] = None,
         offset: Optional[int] = None,
-    ) -> tuple[list[User], int]:
+    ) -> list[User]:
+        pass
+
+    @abstractmethod
+    async def count(self, filter: Optional[UserFilter] = None) -> int:
         pass
 
     @abstractmethod

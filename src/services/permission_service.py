@@ -41,4 +41,8 @@ class PermissionService:
         self, limit: int = 20, offset: Optional[int] = None
     ) -> tuple[list[Permission], int]:
         async with self._db_transaction_factory() as t:
-            return await t.permission_repo.get_all(limit, offset)
+            if count := await t.permission_repo.count():
+                permissions = await t.permission_repo.get_all(limit, offset)
+                return permissions, count
+            else:
+                return [], 0

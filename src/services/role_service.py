@@ -60,7 +60,11 @@ class RoleService:
         self, limit: int = 20, offset: Optional[int] = None
     ) -> tuple[list[Role], int]:
         async with self._db_transaction_factory() as t:
-            return await t.role_repo.get_all(limit, offset)
+            if count := await t.role_repo.count():
+                roles = await t.role_repo.get_all(limit, offset)
+                return roles, count
+            else:
+                return [], 0
 
     async def update(self, id: UUID7, update_inp: RoleUpdateInput) -> Role:
         async with self._db_transaction_factory() as t:

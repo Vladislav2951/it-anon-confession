@@ -28,7 +28,11 @@ class IRoleRepo(ABC):
     @abstractmethod
     async def get_all(
         self, limit: Optional[int] = None, offset: Optional[int] = None
-    ) -> tuple[list[Role], int]:
+    ) -> list[Role]:
+        pass
+
+    @abstractmethod
+    async def count(self) -> int:
         pass
 
     @abstractmethod

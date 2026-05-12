@@ -21,7 +21,7 @@ class TestAdminProtection:
             Permission(id=uuid7(), business_element_id=uuid7(), delete_permission=True)
         ]
         # В системе только один админ (он сам)
-        mock_uow.user_repo.get_all.return_value = (None, 1)
+        mock_uow.user_repo.count.return_value = 1
 
         response = await auth_admin_client.delete(f"/admin/users/{test_admin.id}")
 
