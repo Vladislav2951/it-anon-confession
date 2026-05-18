@@ -8,8 +8,8 @@ from fastapi.responses import JSONResponse
 from pydantic import UUID7
 
 from api.http.common_exceptions import internal_server_error, not_found
+from api.http.deps import PermissionChecker
 from api.http.dto import PaginationDTO
-from api.http.middleware import PermissionChecker
 from api.http.response_models import DataManyResponse, DataResponse, ErrorResponse, Meta
 from core.config import get_settings
 from core.dependencies import permission_srv

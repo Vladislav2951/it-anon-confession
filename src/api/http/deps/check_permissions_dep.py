@@ -7,7 +7,7 @@ from fastapi import Depends, Path
 from pydantic import UUID7
 
 from api.http.common_exceptions import forbidden, internal_server_error
-from api.http.middleware.get_current_user_mw import get_current_user
+from api.http.deps.get_current_user_dep import get_current_user
 from core.dependencies import access_srv, confession_srv, user_srv
 from domain.errors import ForbiddenError
 from domain.validators import Identifier

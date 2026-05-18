@@ -8,17 +8,17 @@ from fastapi.responses import JSONResponse
 from pydantic import UUID7
 
 from api.http.common_exceptions import internal_server_error, not_found
+from api.http.deps import (
+    ConfessionPermissionChecker,
+    PermissionChecker,
+    auth_only,
+    get_current_user,
+)
 from api.http.dto import (
     ConfessionCreateDTO,
     ConfessionPublic,
     ConfessionUpdateDTO,
     PaginationDTO,
-)
-from api.http.middleware import (
-    ConfessionPermissionChecker,
-    PermissionChecker,
-    auth_only,
-    get_current_user,
 )
 from api.http.response_models import DataManyResponse, DataResponse, ErrorResponse, Meta
 from core.config import get_settings

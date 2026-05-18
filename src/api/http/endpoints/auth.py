@@ -9,8 +9,8 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 
 from api.http.common_exceptions import conflict, internal_server_error, unauthorized
+from api.http.deps import auth_only, guest_only
 from api.http.dto import LoginDTO, RegisterDTO
-from api.http.middleware import auth_only, guest_only
 from api.http.response_models import ErrorResponse, MessageResponse
 from core.config import get_settings
 from core.dependencies import auth_srv, session_srv

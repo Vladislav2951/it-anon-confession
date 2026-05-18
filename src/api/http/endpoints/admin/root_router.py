@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from api.http.middleware import auth_only
+from api.http.deps import auth_only
 
 from .business_elements import router as admin_business_elements
 from .permissions import router as admin_permissions

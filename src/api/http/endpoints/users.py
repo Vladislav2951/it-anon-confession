@@ -8,13 +8,13 @@ from fastapi.responses import JSONResponse
 from pydantic import UUID7
 
 from api.http.common_exceptions import conflict, internal_server_error, not_found
-from api.http.dto import ChangePasswordDTO, UpdateUserDTO, UserPublic
-from api.http.middleware import (
+from api.http.deps import (
     PermissionChecker,
     UserPermissionChecker,
     auth_only,
     get_current_user,
 )
+from api.http.dto import ChangePasswordDTO, UpdateUserDTO, UserPublic
 from api.http.response_models import DataResponse, ErrorResponse, MessageResponse
 from core.config import get_settings
 from core.dependencies import user_srv
