@@ -45,9 +45,9 @@ class Settings(BaseSettings):
     DB_ENGINE: str = "postgresql+asyncpg"
     DB_HOST: str = "postgres"
     DB_PORT: int = 5432
-    DB_NAME: str = "postgres"
     DB_USERNAME: str = "postgres"
     DB_PASSWORD: str = "postgres"
+    DB_NAME: str = "postgres"
 
     @computed_field  # type: ignore[prop-decorator]
     @property
