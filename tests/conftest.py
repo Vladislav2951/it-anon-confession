@@ -20,7 +20,6 @@ def mock_uow():
     uow.confession_repo = AsyncMock()
     uow.business_element_repo = AsyncMock()
 
-    # Настройка контекстного менеджера (async with)
     uow.__aenter__.return_value = uow
     uow.__aexit__.return_value = None
     return uow
@@ -35,7 +34,6 @@ def mock_uow_factory(mock_uow):
 
 @pytest.fixture
 async def client(mock_uow_factory) -> AsyncGenerator[AsyncClient, None]:
-    """Клиент с переопределенными сервисами на базе моков."""
     from services import (
         AccessService,
         AuthService,
@@ -47,7 +45,6 @@ async def client(mock_uow_factory) -> AsyncGenerator[AsyncClient, None]:
         UserService,
     )
 
-    # Инициализация сервисов с мок-фабрикой
     t_access = AccessService(mock_uow_factory)
     t_auth = AuthService(mock_uow_factory)
     t_session = SessionService(mock_uow_factory)
@@ -57,7 +54,6 @@ async def client(mock_uow_factory) -> AsyncGenerator[AsyncClient, None]:
     t_be = BusinessElementService(mock_uow_factory, t_access)
     t_permission = PermissionService(mock_uow_factory, t_access)
 
-    # Зависимости в FastAPI
     app.dependency_overrides[dependencies.auth_srv] = lambda: t_auth
     app.dependency_overrides[dependencies.session_srv] = lambda: t_session
     app.dependency_overrides[dependencies.user_srv] = lambda: t_user
